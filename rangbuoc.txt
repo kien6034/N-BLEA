@@ -1,0 +1,17 @@
+Đây là Đồ thị me trích
+    
+Nhân viên: 
+    - Không chờ UAV, tức là đến điểm nào cái là đi luôn
+    - Không đi trùng node 
+    - 1 nhân viên Chỉ đi 1 hành trình
+        + Xuất phát từ 0, đi các điểm, về 0: Hết hành trình 
+
+UAV:
+    - Không đi trùng các node khách hàng(được đi trùng node 0)
+    - Được đi nhiều hành trình 
+    
+    - Giới hạn bay trong 1 hành trình là T 
+
+Mục tiêu: 
+    Tổng thời gian chờ của mẫu là nhỏ nhất 
+

@@ -1,0 +1,11 @@
+T_VEL = 0.583 #mile per hour
+D_VEL = 0.833
+
+INFINITY = 9999999.0
+
+
+#GA parameter 
+POP_SIZE = 100
+ELITE_SIZE = 20
+MUTATION_RATE = 0.01
+GENERATIONS = 500
