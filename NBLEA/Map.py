@@ -63,9 +63,12 @@ class Map:
         for i in range(len(self.nodes)):
             if i == 0:
                 plt.plot(self.base['x'], self.base['y'], "ro", markersize = 10)
+                plt.annotate(i, (self.base['x'], self.base['y']))
+                
             else:
                 plt.plot(self.nodes[i]['x'], self.nodes[i]['y'], "bo", markersize = 5)
-
-        plt.show()
+                plt.annotate(i, (self.nodes[i]['x'], self.nodes[i]['y']))
+            
+     
     
 

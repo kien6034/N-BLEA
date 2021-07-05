@@ -10,7 +10,7 @@ class Map
 Output tung ca the
 
 vd: 20 nhan vien 
-    [18, 20, 14, 6, 8, 1, 5, 16, 4, 15, 11, 3, 7, 9, 17, 12, 13, 10, 19, 2]
+    [18, 14, 6, 8, 1, 5, 16, 4, 15, 11, 3, 7, 9, 17, 12, 13, 10, 19, 2]
 
 
 Chia module: 
@@ -22,3 +22,8 @@ Chia module:
     Mức dưới 
         - Input: [18, 20, 14, 6, 8, 1, 5, 16, 4, 15, 11, 3, 7, 9, 17, 12, 13, 10, 19, 2]
         - Out: Hành trình cho UAV 
+
+
+#test case 
+
+SO NHAN VIEN = 3
