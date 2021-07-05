@@ -1,0 +1,56 @@
+Note:
+
+Kiên: 
+    Sau khi làm thử mức 2, mình thấy việc chạy từng cái thuật toán tối ưu cho mỗi cá thể mức trên là không hợp lý 
+    (Thời gian chạy của tối ưu mức dưới mà lớn hơn 1s thì giải cũng mất hơn tiếng)
+
+
+Thuật toán (hiện tại): 
+     
+    pop = initPop() # tạo N cá thể 
+    
+    for individual in pop:
+        (1) appoximateEvaluate(individual)   # đánh giá tương đối 
+
+    while điều kiện dừng:
+        off_springs = create_new_offsprings() #tạo con, đánh giá nó bằng func (1), local search (maybe)
+
+        chọn N cá thể tốt nhất từ pop hợp với off_springs
+
+        #ĐẾN ĐÂY: 2 hướng 
+            - 1, Vẫn dùng hàm xấp xỉ kia chạy bình thường, bài toán không phải là 2 mức nữa.
+                Sau khi chạy GA xong và tìm ra đường đi (với thuật toán xấp xỉ), sang pha tiếp theo thực hiện EA tìm đường đi cho UAV dựa trên hành trình có sẵn 
+                Điều kiện: Hàm appoximateEvaluate(individual) phải đủ tốt
+
+            - 2, Bi-level, tối ưu mức dưới cho N thằng tốt kia dùng MFEA hoặc một thuật toán tiến hóa thông thường 
+                Điều kiện: thuật toán tiến hóa thông thường phải chạy nhanh
+
+
+
+@func approximateEvaluate ()
+    - Input: Hành trình của các nhân viên 
+    - Ouput: Đánh giá một cách tương đối tổng thời gian chờ tốt nhất của các mẫu
+
+    Vd: Lấy ví dụ 1 cách đơn giản nhất là tổng thời gian chờ của mẫu sẽ tỉ lệ thuận với tổng thời gian các nhân viên 
+    hoàn thành hành trình 
+        
+
+@func create_new_offsprings()
+    
+    off_springs = []
+
+    while len(off_springs) < N:
+        chọn cha mẹ 
+        crossover / mutation  => list sub_offsprings 
+        
+        for c in sub_offsprings:
+            fc = approximateEvaluate (c)
+
+            Nếu fc nhỏ hơn cả 2 f của cha mẹ:
+                Local search
+        
+
+        
+
+
+        
