@@ -60,13 +60,18 @@ def sort_by_time(specific_routes):
                 routes[node] = travel_time
 
         
-            t_back_time[tid] = travel_time + graph.t_time[path[-1]][0]
+            t_back_time[tid] = travel_time + graph.t_time[path[-1]][0] #time that each technican gets back to base {'0': 132.3, '1': 212.23}
 
-    sorted_routes = dict(sorted(routes.items(), key= lambda item: item[1]))
+    sorted_routes = dict(sorted(routes.items(), key= lambda item: item[1])) #route sorted in time order
     
 
+    #find max cost 
+    max_cost = 0 #total cost when there are no uav support
+    for tid in range(TECHNICAN_NUMS):
+        for node in specific_routes[tid]:
+            max_cost += t_back_time[tid] - sorted_routes[node]
 
-    return sorted_routes, t_back_time
+    return sorted_routes, t_back_time, max_cost 
 
 
 def init_pheromones(t_route):
@@ -104,10 +109,10 @@ def solver(sgraph, t_route):
     global graph
     graph = sgraph
     
-    specific_routes = get_specific_route(t_route)
+    specific_routes = get_specific_route(t_route)  #specific route: route corresponding to technicans {'0': path, '1': path} 
     #draw(specific_routes)
 
-    sorted_routes, t_back_time = sort_by_time(specific_routes)
+    sorted_routes, t_back_time, max_cost = sort_by_time(specific_routes)
 
     #Ant run 
     global_pheromones = init_pheromones(t_route)
@@ -127,8 +132,7 @@ def solver(sgraph, t_route):
             
             uav_tour = ant.find_route(pheromones)
           
-
-            fitness = ant.fitness(uav_tour, specific_routes, t_back_time)
+            fitness = ant.fitness(uav_tour, specific_routes, t_back_time, max_cost)
 
             #local pheromone update 
             pheromones = ant.local_pheromone_update(uav_tour, pheromones)
@@ -153,12 +157,11 @@ def solver(sgraph, t_route):
             print(f"iter {iter}")
 
         if iter == (MAX_ITERATION - 1):
-            print(global_pheromones)
-            print(best_u_tour)
-            print(iterO)
+            # plt.plot(x, y)
+            # plt.show()
 
-            plt.plot(x, y)
-            plt.show()
+
+            return iterO, max_cost, best_u_tour
 
             
             
@@ -169,7 +172,7 @@ def solver(sgraph, t_route):
         ###########################################################
         ###########################################################
         
-
+    return None
 
 
 class Ant():
@@ -236,16 +239,9 @@ class Ant():
 
         return uav_tour
 
-    def fitness(self, uav_tour, ispecific_routes, t_back_time): 
+    def fitness(self, uav_tour, ispecific_routes, t_back_time, max_cost): 
         
         specific_routes = copy.deepcopy(ispecific_routes)
-        max_cost = 0
-        
-       
-        #find max cost 
-        for tid in range(TECHNICAN_NUMS):
-            for node in specific_routes[tid]:
-                max_cost += t_back_time[tid] - self.search_space[node]
 
         cost = max_cost 
 
