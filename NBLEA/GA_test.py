@@ -1,7 +1,9 @@
 from NBLEA.Map import *
 from NBLEA.Parameter import *
+from NBLEA.Low import *
 import random
 import operator
+import copy
 
 
 class GA:
@@ -24,13 +26,13 @@ class GA:
 
         return populations        
 
-    def rank_pop(self, pop):
+    def rank_pop(self, pop, low_fitness):
         fitness_results = {}
         
         for i in range(0, len(pop)):
-            fitness_results[i] = self.idv_fitness(pop[i])
+            fitness_results[i] = low_fitness[i]
 
-        return sorted(fitness_results.items(), key = operator.itemgetter(1), reverse = True)
+        return sorted(fitness_results.items(), key = operator.itemgetter(1), reverse = False)
 
 
     def idv_fitness(self, idv):
@@ -42,14 +44,13 @@ class GA:
         fitness = 1 / cost 
         return fitness
 
-    def pop_fitness(self, pop):
+    def pop_fitness(self, low_fitness):
         #calculate average fitness of population
         fitness = 0
-        for i in range(0, len(pop)):
-            fitness += self.idv_fitness(pop[i])
+        for i in range(0, len(low_fitness)):
+            fitness += low_fitness[i]
 
-        return fitness / len(pop)
-
+        return fitness / len(low_fitness)
 
     def selection(self, pop_ranked, pop, eliteSize):
         elite_pop = []
@@ -57,15 +58,15 @@ class GA:
             elite_pop.append(pop[i[0]])
         return elite_pop
 
-    def tournament_selection(self, pop):
+    def tournament_selection(self, pop, low_fitness):
         # Selecting randomly 4 individuals to select 2 parents by a binary tournament
         parentIds = set()
         while len(parentIds) < 4:
             parentIds |= {random.randint(0, len(pop) - 1)}
         parentIds = list(parentIds)
         # Selecting 2 parents with the binary tournament
-        parent1 = pop[parentIds[0]] if self.idv_fitness(pop[parentIds[0]]) > self.idv_fitness(pop[parentIds[1]]) else pop[parentIds[1]]
-        parent2 = pop[parentIds[2]] if self.idv_fitness(pop[parentIds[2]]) > self.idv_fitness(pop[parentIds[3]]) else pop[parentIds[3]]
+        parent1 = pop[parentIds[0]] if low_fitness[parentIds[0]] < low_fitness[parentIds[1]] else pop[parentIds[1]]
+        parent2 = pop[parentIds[2]] if low_fitness[parentIds[2]] < low_fitness[parentIds[3]] else pop[parentIds[3]]
         return parent1, parent2
 
     def mutate(self, c, prob):
@@ -131,8 +132,7 @@ class GA:
         # init pop 
         pop = self.init_Pop(popSize, self.search_space)
 
-        print(pop[0])
-        # print(self.rank_pop(pop))
+        # print(pop[0])
 
         for i in range(0, generations):
             #chosing parent 
@@ -141,18 +141,32 @@ class GA:
             #decode and fitness calculation 
             #survivor selection
             #find best
+            
+            print(f'generation {i+1}')
+
+            low_fitness = []
+            u_tours = []
+            for j in range(len(pop)):
+                # print(f'calculating fitness {j+1}')
+                t_route = copy.deepcopy(pop[j]) 
+                cost, max_cost, u_tour = solver(self.graph, t_route) 
+                low_fitness += [(1 - cost) * max_cost]
+                u_tours += [u_tour]
 
             next_pop = []
             while len(next_pop) < popSize - eliteSize:
-                p1, p2 = self.tournament_selection(pop)
+                p1, p2 = self.tournament_selection(pop, low_fitness)
                 c1, c2 = self.crossover(p1, p2)
                 c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
                 next_pop += [c1, c2]
-            pop_ranked = self.rank_pop(pop)
+            pop_ranked = self.rank_pop(pop, low_fitness)
             elite_pop = self.selection(pop_ranked, pop, eliteSize)
             next_pop += elite_pop
             pop = next_pop
-            print(self.pop_fitness(pop))
+            print('average fitness:', self.pop_fitness(low_fitness))
+            print('best fitness:', low_fitness[self.rank_pop(pop, low_fitness)[0][0]])
+            print('t_tour', pop[self.rank_pop(pop, low_fitness)[0][0]])
+            print('UAV tour:', u_tours[self.rank_pop(pop, low_fitness)[0][0]])
             
         
         #find fitness of pop 

@@ -45,7 +45,8 @@ def crossover(p1, p2):
 
 a = [1, 2, 3 ,4 , 5]
 b = [3, 1, 5 ,2 , 4]
-c = a[1:3]
-c.reverse()
+c = a
+a += [100]
+# c.reverse()
 # print(crossover(a, b))
-print(a[:1] + c + a[3:])
+print(a, c)

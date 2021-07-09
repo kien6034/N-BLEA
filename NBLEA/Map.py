@@ -17,7 +17,7 @@ class Map:
         self.create_time_matrix()
   
     def readFile(self, fileName):
-        print("Reading file ...")
+        # print("Reading file ...")
         f = open(fileName, "r")
 
         t = 0
@@ -33,7 +33,7 @@ class Map:
         
     
     def create_time_matrix(self):
-        print("Calculating time travel...")
+        # print("Calculating time travel...")
         num_length = len(self.nodes) + 1 #node 0 + customer node + node 0
 
         nodes = copy.deepcopy(self.nodes)

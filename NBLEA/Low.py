@@ -153,8 +153,8 @@ def solver(sgraph, t_route):
             x.append(iter) 
             y.append(iterO)
         
-        if iter % 100 == 0:
-            print(f"iter {iter}")
+        # if iter % 100 == 0:
+        #     print(f"iter {iter}")
 
         if iter == (MAX_ITERATION - 1):
             # plt.plot(x, y)
