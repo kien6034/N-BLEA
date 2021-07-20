@@ -145,6 +145,8 @@ def solver(sgraph, t_route):
             
   
             #TODO: local search 
+            break
+        break
         
         #global 
         global_pheromones = global_pheromone_update(best_u_tour, global_pheromones, iterO)
@@ -240,7 +242,11 @@ class Ant():
         return uav_tour
 
     def fitness(self, uav_tour, ispecific_routes, t_back_time, max_cost): 
-        
+
+        print(uav_tour)
+        print(ispecific_routes)
+        print(self.search_space)
+
         specific_routes = copy.deepcopy(ispecific_routes)
 
         cost = max_cost 
