@@ -12,6 +12,4 @@ fitness, max_cost, best_u_tour = solver(graph, t_route)
 #best_u_tour: hành trình của uav 
 
 print(fitness, max_cost, best_u_tour)
-
-
 #plt.show()
