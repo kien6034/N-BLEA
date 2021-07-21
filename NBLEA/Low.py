@@ -1,9 +1,11 @@
+from operator import sub
 from NBLEA.Map import *
 from NBLEA.Parameter import *
 import copy, random
 
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
 graph = None
 
@@ -45,8 +47,8 @@ def get_specific_route(t_route):
 
 def sort_by_time(specific_routes):
     routes = dict()
-
     t_back_time = dict()
+    
     for tid in range(TECHNICAN_NUMS):
         path = specific_routes[tid]
 
@@ -63,21 +65,24 @@ def sort_by_time(specific_routes):
             t_back_time[tid] = travel_time + graph.t_time[path[-1]][0] #time that each technican gets back to base {'0': 132.3, '1': 212.23}
 
     sorted_routes = dict(sorted(routes.items(), key= lambda item: item[1])) #route sorted in time order
-    
-
+ 
     #find max cost 
     max_cost = 0 #total cost when there are no uav support
     for tid in range(TECHNICAN_NUMS):
         for node in specific_routes[tid]:
-            max_cost += t_back_time[tid] - sorted_routes[node]
+            max_cost += t_back_time[tid] - sorted_routes[node] 
 
     return sorted_routes, t_back_time, max_cost 
 
 
-def init_pheromones(t_route):
+def init_pheromones(it_route):
     pheromones = dict()
     
+    t_route = copy.deepcopy(it_route)
     t_route.append(0)
+    # t_route.append(len(t_route))
+    # print(t_route)
+
     for nodei in t_route:
         for nodej in t_route:
             pheromones[(nodei, nodej)] = INIT_PHEROMONE
@@ -112,6 +117,7 @@ def solver(sgraph, t_route):
     specific_routes = get_specific_route(t_route)  #specific route: route corresponding to technicans {'0': path, '1': path} 
     #draw(specific_routes)
 
+
     sorted_routes, t_back_time, max_cost = sort_by_time(specific_routes)
 
     #Ant run 
@@ -145,8 +151,7 @@ def solver(sgraph, t_route):
             
   
             #TODO: local search 
-            break
-        break
+            
         
         #global 
         global_pheromones = global_pheromone_update(best_u_tour, global_pheromones, iterO)
@@ -162,13 +167,15 @@ def solver(sgraph, t_route):
             # plt.plot(x, y)
             # plt.show()
 
+            #print fly time of uav 
+            for st in best_u_tour:
+                path = best_u_tour[st]
+
+                for i in range(len(path)-1):
+                    print(f"fly time from {path[i]} to {path[i+1]} is: {graph.d_time[path[i]][path[i+1]]}") 
 
             return iterO, max_cost, best_u_tour
 
-            
-            
-       
-        
 
         ###########################################################
         ###########################################################
@@ -185,7 +192,6 @@ class Ant():
     def find_route(self,pheromones):
         uav_tour = dict()
 
-
         routes = list(self.search_space.keys())
 
         search_space = copy.deepcopy(self.search_space)
@@ -193,49 +199,52 @@ class Ant():
         
         C = list()
 
-        for index in range(len(routes)):
+        for index in range(len(routes) -1):
             C.append(routes[index])
             C.append(0)
+        
         C.append(routes[-1])
 
-        
-        #[18, 0, 14, 0, 6, 0, 1, 0, 4, 0, 8, 0, 3, 0, 5, 0, 16, 0, 15, 0, 11, 0, 17, 0, 7, 0, 10, 0, 9, 0, 12, 0, 13, 0, 19, 0, 2]
-        k = 1 # so luong hanh trinh cua uav 
+        #[6, 0, 5, 0, 1, 0, 4, 0, 3, 0, 2]
+        k = 0 # so luong hanh trinh cua uav 
         uav_tour[k] = list()
         uav_tour[k].append(0)
 
         u_time = 0
+        endurance = 0
+
         for i in range(0, len(C)):
             src = uav_tour[k][-1] #get last elemetn of uav tour 
 
-            if C[i] == src: #if 2 0 node in a row 
+            if C[i] == src: #if 2 node 0 in a row 
                 continue
         
-            if random.random() < (1 /(1+ np.exp(- pheromones[(src, C[i])]))):
-                
+            if random.random() < (1 /(1+ np.exp(- pheromones[(src, C[i])]))): 
                 e_des = C[i]
-
                 e_travel_time = graph.d_time[src][e_des]
 
-                
+                #constrain 1: uav must arrive before technican
                 if (u_time + e_travel_time) > search_space[e_des] and e_des != 0: #neu uav den sau drone  -> khong chon 
                     continue
+                else:
+                    if e_des == 0:
+                        u_time += e_travel_time
+                    else:
+                        u_time = search_space[e_des]
 
-                #TODO: T
-
+                #constrain 2: T, uav energy level 
                 uav_tour[k].append(e_des)
                 
                 #check if close subtour 
                 if uav_tour[k][-1] == 0:
                     k +=1 
-
                     uav_tour[k] = list()
                     uav_tour[k].append(0)
         
         if uav_tour[k][-1] != 0:
             uav_tour[k].append(0)
 
-        if len(uav_tour[k]) == 1:
+        if len(uav_tour[k]) == 1: #case when there are only start node 0
             del uav_tour[k]
        
 
@@ -243,9 +252,7 @@ class Ant():
 
     def fitness(self, uav_tour, ispecific_routes, t_back_time, max_cost): 
 
-        print(uav_tour)
-        print(ispecific_routes)
-        print(self.search_space)
+       
 
         specific_routes = copy.deepcopy(ispecific_routes)
 
@@ -253,20 +260,28 @@ class Ant():
 
     
         for stid in uav_tour:
+            #iterate each uav subtour 
             subtour = uav_tour[stid]
+            
+            last_sub_node_idx = len(subtour) - 2 #last node's index of uav subtour
+    
+            #caculate time when uav back to base 
+         
+            back_time = self.search_space[subtour[last_sub_node_idx]] + graph.d_time[subtour[last_sub_node_idx]][0] 
 
+            #iterate each node in uav subtour
             for unid in range(1, len(subtour) -1):
+
+                #iterate over each route of technican
                 for tid in specific_routes:
                     index = -1
-                    if subtour[unid] in specific_routes[tid]:
+                    if subtour[unid] in specific_routes[tid]: #if uav take sample from technican tid
                         index = specific_routes[tid].index(subtour[unid])
 
-                        #calculate time when uav back to base 
-                        back_time = self.search_space[subtour[unid]] + graph.d_time[subtour[unid]][0]
-
                         #reduce cost 
-                        for finished_node in specific_routes[tid][0:(index+1)]:
-                            cost -= t_back_time[tid] - (back_time + self.search_space[finished_node])
+                        cost -= ((index +1) * (t_back_time[tid] - back_time))
+                        # for finished_node in specific_routes[tid][0:(index+1)]:
+                        #     cost -= t_back_time[tid] - back_time
                         
                         #delete finished node 
                         del specific_routes[tid][0:(index+1)]
@@ -275,6 +290,8 @@ class Ant():
 
         #print(self.search_space)
         #print(uav_tour)
+        
+
         return (1 - cost / max_cost)
 
 

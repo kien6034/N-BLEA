@@ -29,19 +29,23 @@ class Map:
                     'y': float(ys[1])
                 }
                 self.nodes[t-1] = node
+                #print(f"Node {t-1} is added {ys[0] - ys[1]}")
             t +=1 
         
     
     def create_time_matrix(self):
         # print("Calculating time travel...")
-        num_length = len(self.nodes) + 1 #node 0 + customer node + node 0
+        num_length = len(self.nodes) + 2 #node 0 + customer node + node 0
 
         nodes = copy.deepcopy(self.nodes)
+
+        
         
         #add base to dict
         nodes[0] = {'x': 0, 'y': 0}
-        nodes[num_length -1] = {'x': 0, 'y': 0} 
+        nodes[num_length - 1] = {'x': 0, 'y': 0} 
 
+        
         t_time = np.full((num_length, num_length), INFINITY) # khoi tao lai ve 0 tai ii 
         d_time = np.full((num_length, num_length), INFINITY)
 
@@ -60,7 +64,7 @@ class Map:
         
     
     def draw(self):
-        for i in range(len(self.nodes)):
+        for i in range(len(self.nodes) + 1):
             if i == 0:
                 plt.plot(self.base['x'], self.base['y'], "ro", markersize = 10)
                 plt.annotate(i, (self.base['x'], self.base['y']))
