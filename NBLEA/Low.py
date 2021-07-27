@@ -1,4 +1,6 @@
 from operator import sub
+
+from numpy.lib.type_check import common_type
 from NBLEA.Map import *
 from NBLEA.Parameter import *
 import copy, random
@@ -134,9 +136,10 @@ def solver(sgraph, t_route):
         pheromones = copy.deepcopy(global_pheromones)
         
         best_u_tour = None
+        best_su_tour = None
         for antIter in range(NUM_LANTS):
             
-            uav_tour = ant.find_route(pheromones)
+            uav_tour, s_uav_tour = ant.find_route(pheromones)
           
             fitness = ant.fitness(uav_tour, specific_routes, t_back_time, max_cost)
 
@@ -148,6 +151,7 @@ def solver(sgraph, t_route):
 
                 iterO = fitness
                 best_u_tour = uav_tour
+                best_su_tour = s_uav_tour
             
   
             #TODO: local search 
@@ -168,12 +172,13 @@ def solver(sgraph, t_route):
             # plt.show()
 
             #print fly time of uav 
-            for st in best_u_tour:
-                path = best_u_tour[st]
+            # for st in best_u_tour:
+            #     path = best_u_tour[st]
 
-                for i in range(len(path)-1):
-                    print(f"fly time from {path[i]} to {path[i+1]} is: {graph.d_time[path[i]][path[i+1]]}") 
+            #     for i in range(len(path)-1):
+            #         print(f"fly time from {path[i]} to {path[i+1]} is: {graph.d_time[path[i]][path[i+1]]}") 
 
+            # print(best_su_tour)
             return iterO, max_cost, best_u_tour
 
 
@@ -209,6 +214,10 @@ class Ant():
         k = 0 # so luong hanh trinh cua uav 
         uav_tour[k] = list()
         uav_tour[k].append(0)
+        
+        s_uav_tour = dict()
+        s_uav_tour[k] = list()
+        s_uav_tour[k].append((0, 0.0))
 
         u_time = 0
         endurance = 0
@@ -223,32 +232,50 @@ class Ant():
                 e_des = C[i]
                 e_travel_time = graph.d_time[src][e_des]
 
-                #constrain 1: uav must arrive before technican
-                if (u_time + e_travel_time) > search_space[e_des] and e_des != 0: #neu uav den sau drone  -> khong chon 
-                    continue
+                if e_des == 0:
+                    u_time += e_travel_time
                 else:
-                    if e_des == 0:
-                        u_time += e_travel_time
-                    else:
-                        u_time = search_space[e_des]
+                    #constrain 1: T
+                    if endurance + e_travel_time + graph.d_time[e_des][0] > T: #make sure uav can fly back to base 
+                        continue
+                    
+                    #constrain 2: UAV arrive before techincan
+                    if u_time + e_travel_time > search_space[e_des]:
+                        continue
+                    
+                    u_time = search_space[e_des]
+                    endurance += e_travel_time
 
                 #constrain 2: T, uav energy level 
+
+
                 uav_tour[k].append(e_des)
+                s_uav_tour[k].append((e_des, u_time))
                 
                 #check if close subtour 
                 if uav_tour[k][-1] == 0:
+                    #create new subtour 
                     k +=1 
                     uav_tour[k] = list()
                     uav_tour[k].append(0)
+
+                    s_uav_tour[k] = list()
+                    s_uav_tour[k].append((0, u_time))
+
+                    #reset endurance 
+                    endurance = 0
         
         if uav_tour[k][-1] != 0:
             uav_tour[k].append(0)
+
+            u_time += graph.d_time[uav_tour[k][-1]][0]
+            s_uav_tour[k].append((0, u_time))
 
         if len(uav_tour[k]) == 1: #case when there are only start node 0
             del uav_tour[k]
        
 
-        return uav_tour
+        return uav_tour, s_uav_tour
 
     def fitness(self, uav_tour, ispecific_routes, t_back_time, max_cost): 
 
