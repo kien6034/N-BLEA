@@ -13,8 +13,8 @@ class GA:
 
 
     def create_individual(self, searchSpace):
-        
         ids = list(searchSpace.keys())
+        ids.extend(list(range(len(ids) + 1, len(ids) + TECHNICAN_NUMS)))
         random.shuffle(ids)
         return ids
     

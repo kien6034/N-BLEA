@@ -1,9 +1,10 @@
 from NBLEA.Low import *
+import json
 
-graph = Map("Instances/6.5.1.txt")
+graph = Map("Instances/6.5.3.txt")
 #graph.draw()
 
-t_route = [6, 5, 1, 4 ,3 ,2]
+t_route = [4, 3 ,6,  1, 5, 2] 
 
 fitness, max_cost, best_u_tour = solver(graph, t_route)  
 

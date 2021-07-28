@@ -1,16 +1,16 @@
 from ast import Num
 
-
-T_VEL = 35/60 #mile per minute 35/60
-D_VEL = 0.833
-T = 30
-
-INFINITY = 9999999.0
-
-
-#SO LUONG
+#Model parameter
+T_VEL = 0.58#mile per minute 35/60
+D_VEL = 0.83
 
 TECHNICAN_NUMS = 1
+TECHNICAN_CAN_WAIT = True
+
+
+#Constrain
+WORK_TIME = 120 
+T = 30
 
 
 #GA parameter 
@@ -18,8 +18,6 @@ POP_SIZE = 30
 ELITE_SIZE = 6  # even int
 MUTATION_RATE = 0.01
 GENERATIONS = 100
-
-
 
 
 #START LOW 
@@ -34,3 +32,7 @@ DEPOSIT_RATE = 10 / MAX_ITERATION
 GLOBAL_EVAPORATION_RATE = 1 / MAX_ITERATION
 
 #=====END LOW 
+
+
+
+INFINITY = 9999999.0

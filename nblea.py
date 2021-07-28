@@ -5,13 +5,19 @@ from NBLEA import Map as map
 from NBLEA import GA, GA_test 
 
 
-graph = map.Map("Instances/6.5.1.txt")
-# graph.draw()
-# plt.show()
+graph = map.Map("Instances/6.5.3.txt")
 
 # sys.exit()
+
+if 0:
+    graph.draw()
+    plt.axis('equal')
+    plt.show()
+    
+    sys.exit()
 
 # ga = GA.GA(graph)
 ga = GA_test.GA(graph)
 
 ga.run()
+
