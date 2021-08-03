@@ -11,11 +11,13 @@ import sys, pprint
 
 graph = None
 
+ACTIVE_TECH = TECHNICAN_NUMS
+
 def draw(routes):
     colors = ["green", "black", "red", "orange"]
         
-    
-    for tid in range(TECHNICAN_NUMS):
+
+    for tid in range(ACTIVE_TECH):
         path = routes[tid]
 
         for i in range(len(path)):
@@ -32,10 +34,12 @@ def draw(routes):
             
 
 def get_specific_route(t_route):
+    global ACTIVE_TECH
     routes = dict()
 
     num_nodes = len(t_route) - 1
     sub_end_points = list(range(num_nodes + 1, num_nodes + TECHNICAN_NUMS))
+
 
     for tid in range(TECHNICAN_NUMS):
         routes[tid] = list()
@@ -45,15 +49,22 @@ def get_specific_route(t_route):
         if t_route[index] in sub_end_points:
             k += 1
         else:
-            routes[k].append(t_route[index])     
+            routes[k].append(t_route[index]) 
     
-    return routes
+    new_routes = dict()
+    for tid in routes:
+        if routes[tid]: 
+            new_routes[len(new_routes)] = routes[tid]
+        else:
+            ACTIVE_TECH -= 1
+            
+    return new_routes
 
 def sort_by_time(specific_routes):
     routes = dict()
     t_back_time = dict()
-    
-    for tid in range(TECHNICAN_NUMS):
+
+    for tid in range(ACTIVE_TECH):
         path = specific_routes[tid]
 
         travel_time = 0 
@@ -71,7 +82,7 @@ def sort_by_time(specific_routes):
  
     #find max cost 
     max_cost = 0 #total cost when there are no uav support
-    for tid in range(TECHNICAN_NUMS):
+    for tid in range(ACTIVE_TECH):
         for node in specific_routes[tid]:
             max_cost += t_back_time[tid] - sorted_routes[node] 
 
@@ -157,6 +168,7 @@ def solver(sgraph, t_route):
         
         #global 
         global_pheromones = global_pheromone_update(best_u_tour, global_pheromones, iterO)
+        
         
         if iter % 5 == 0:
             x.append(iter) 
@@ -321,8 +333,9 @@ class Ant():
         
         specific_route = copy.deepcopy(self.specific_routes)
         wait_times = dict()
-
+        
         for tid in self.specific_routes:
+            
             path = self.specific_routes[tid]
             last_node = path[-1]
             
