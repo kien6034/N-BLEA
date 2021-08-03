@@ -5,14 +5,7 @@ from NBLEA import Map as map
 from NBLEA import GA, GA_test 
 
 
-<<<<<<< HEAD
-
 graph = map.Map("Instances/6.5.3.txt")
-# graph.draw()
-# plt.show()
-=======
-graph = map.Map("Instances/6.5.3.txt")
->>>>>>> origin/kien_low
 
 # sys.exit()
 
