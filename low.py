@@ -8,7 +8,7 @@ if 0:
     plt.show()
     sys.exit()
 
-t_route = [7, 2, 1, 3, 4, 6, 5] 
+t_route = [7, 4, 3, 6, 1, 5, 2] 
 
 cost, best_route_details, best_u_tour = solver(graph, t_route)  
 pprint.pprint(best_route_details)

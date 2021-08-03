@@ -152,6 +152,7 @@ class GA:
                 # print(t_route)
                 # print(TECHNICAN_NUMS)
                 cost, route_detail, u_tour = solver(self.graph, t_route) 
+                #technican fitness: tf ^ alpha * df ^ beta.
                 low_fitness += [cost]
                 u_tours += [u_tour]
 
