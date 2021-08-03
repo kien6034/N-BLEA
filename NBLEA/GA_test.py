@@ -14,9 +14,8 @@ class GA:
 
 
     def create_individual(self, searchSpace):
-        
         ids = list(searchSpace.keys())
-        # ids.extend(list(range(len(ids) + 1, len(ids) + TECHNICAN_NUMS)))
+        ids.extend(list(range(len(ids) + 1, len(ids) + TECHNICAN_NUMS)))
         random.shuffle(ids)
         return ids
     
@@ -151,12 +150,10 @@ class GA:
             for j in range(len(pop)):
                 # print(f'calculating fitness {j+1}')
                 t_route = copy.deepcopy(pop[j]) 
-                # cost, max_cost, u_tour = solver(self.graph, t_route) 
-                # low_fitness += [(1 - cost) * max_cost]
-                # u_tours += [u_tour]
-
-                low_GA = Low_GA.GA(self.graph, t_route)
-                cost, u_tour = low_GA.run()
+                # print(t_route)
+                # print(TECHNICAN_NUMS)
+                cost, route_detail, u_tour = solver(self.graph, t_route) 
+                #technican fitness: tf ^ alpha * df ^ beta.
                 low_fitness += [cost]
                 u_tours += [u_tour]
 

@@ -7,7 +7,7 @@ import copy, math
 
 class Map:
     def __init__(self, fileName) -> None:
-        self.nodes = dict() #x,y 
+        self.nodes = dict() #x,y  - base
         
         self.base = {'x': 0, 'y': 0}
         self.t_time = None
@@ -15,8 +15,7 @@ class Map:
 
         self.readFile(fileName)
         self.create_time_matrix()
-        # print(self.t_time)
-        # print(self.d_time)
+    
   
     def readFile(self, fileName):
         # print("Reading file ...")
@@ -52,11 +51,10 @@ class Map:
         d_time = np.full((num_length, num_length), INFINITY)
 
 
-       
         for i in range(num_length):
             for j in range(num_length):
                 
-                distance =  math.sqrt(((nodes[i]['x'] - nodes[j]['x']) ** 2 )+ ((nodes[i]['y'] - nodes[j]['y']) ** 2))
+                distance =  math.sqrt(((nodes[i]['x'] - nodes[j]['x']) ** 2 ) + ((nodes[i]['y'] - nodes[j]['y']) ** 2))
                 t_time[i][j] = float(distance / T_VEL)
                 d_time[i][j] = float(distance / D_VEL)
         
