@@ -149,8 +149,10 @@ class GA:
             for j in range(len(pop)):
                 # print(f'calculating fitness {j+1}')
                 t_route = copy.deepcopy(pop[j]) 
-                cost, max_cost, u_tour = solver(self.graph, t_route) 
-                low_fitness += [(1 - cost) * max_cost]
+                # print(t_route)
+                # print(TECHNICAN_NUMS)
+                cost, route_detail, u_tour = solver(self.graph, t_route) 
+                low_fitness += [cost]
                 u_tours += [u_tour]
 
             next_pop = []
