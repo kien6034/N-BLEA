@@ -15,6 +15,8 @@ class Map:
 
         self.readFile(fileName)
         self.create_time_matrix()
+        # print(self.t_time)
+        # print(self.d_time)
   
     def readFile(self, fileName):
         # print("Reading file ...")

@@ -6,7 +6,7 @@ from NBLEA import GA, GA_test
 
 
 
-graph = map.Map("Instances/6.5.1.txt")
+graph = map.Map("Instances/6.5.3.txt")
 # graph.draw()
 # plt.show()
 

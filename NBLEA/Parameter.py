@@ -1,19 +1,20 @@
 from ast import Num
 
 
-T_VEL = 0.583 #mile per hour
-D_VEL = 0.833
+T_VEL = 0.58 #mile per hour
+D_VEL = 0.83
 
 INFINITY = 9999999.0
+T_MAX = 30
 
 #SO LUONG
 
-TECHNICAN_NUMS = 1
+TECHNICAN_NUMS = 5
 
 
 #GA parameter 
 POP_SIZE = 30
-ELITE_SIZE = 6  # even int
+ELITE_SIZE = 2  # even int
 MUTATION_RATE = 0.01
 GENERATIONS = 100
 

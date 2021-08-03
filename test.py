@@ -1,52 +1,23 @@
+from operator import le
 import random 
+from NBLEA import Low_GA, Map
 
-def crossover(p1, p2):
-    size = min(len(p1), len(p2))
-    c1, c2 = ['x'] * size, ['x'] * size
+graph = Map.Map("Instances/6.5.3.txt")
 
-    cutIdx = set()
-    while len(cutIdx) < 2:
-        cutIdx |= {random.randint(1, size - 1)}
-    cutIdx = list(cutIdx)
-    cutIdx1, cutIdx2 = cutIdx[0], cutIdx[1]
-    cutIdx1, cutIdx2 = min(cutIdx1, cutIdx2), max(cutIdx1, cutIdx2)
-    c1[cutIdx1:cutIdx2] = p2[cutIdx1:cutIdx2]
-    c2[cutIdx1:cutIdx2] = p1[cutIdx1:cutIdx2]
+ga = Low_GA.GA(graph, [4, 3 ,6 ,1 ,5 ,2])
 
-    p1_dict={}
-    p2_dict={}
-    for i in range(size):
-        if c1[i] == 'x' or c2[i] == 'x':
-            if p1[i] not in c1:
-                c1[i] = p1[i]
-            if p2[i] not in c2:
-                c2[i] = p2[i]
+ga.run()
+# print(2*4 -1)
 
-        p1_dict[p1[i]] = p2[i]
-        p2_dict[p2[i]] = p1[i]
-
-    for i in range(size):
-        if c1[i] == 'x':
-            new_gen = p1[i]
-            while True:
-                new_gen = p2_dict[new_gen]
-                if new_gen not in c1:
-                    c1[i] = new_gen
-                    break
-        if c2[i] == 'x':
-            new_gen = p1[i]
-            while True:
-                new_gen = p1_dict[new_gen]
-                if new_gen not in c2:
-                    c2[i] = new_gen
-                    break
-
-    return c1, c2
-
-a = [1, 2, 3 ,4 , 5]
+a = [1, 2, 3 ,4 , 5, 6]
 b = [3, 1, 5 ,2 , 4]
-c = a
-a += [100]
+c = [a, b] 
+# for i in range(len(a)-1):
+#     a.insert(2*i + 1, 0)
+# print(a)
+
 # c.reverse()
 # print(crossover(a, b))
-print(a, c)
+
+# for i in range(1, 2):
+#     print(i)

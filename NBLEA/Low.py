@@ -8,6 +8,7 @@ import numpy as np
 import sys
 
 graph = None
+# graph = Map("Instances/6.5.1.txt")
 
 def draw(routes):
     colors = ["green", "black", "red", "orange"]
@@ -171,8 +172,8 @@ def solver(sgraph, t_route):
             for st in best_u_tour:
                 path = best_u_tour[st]
 
-                for i in range(len(path)-1):
-                    print(f"fly time from {path[i]} to {path[i+1]} is: {graph.d_time[path[i]][path[i+1]]}") 
+                # for i in range(len(path)-1):
+                #     print(f"fly time from {path[i]} to {path[i+1]} is: {graph.d_time[path[i]][path[i+1]]}") 
 
             return iterO, max_cost, best_u_tour
 
