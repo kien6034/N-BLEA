@@ -5,13 +5,36 @@ from NBLEA import Low_GA
 import random
 import operator
 import copy
+import logging
+from os import path, mkdir
+
+
 
 
 class GA:
     def __init__(self, graph) -> None:
         self.graph = graph
         self.search_space = graph.nodes
+        self.logger = self.generateLogger(self.graph.fileName)
 
+    def generateLogger(self, inputFileDir):
+        inputFile = inputFileDir.replace('Instances/', '')
+        inputFileName = inputFile.replace('.txt', '')
+
+        if not path.exists(f'result/{inputFileName}'):
+            mkdir(f'result/{inputFileName}')
+        fileLogName = f'result/{inputFileName}/{inputFileName}.log'
+
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.INFO)
+
+        formatter = logging.Formatter('%(message)s')
+
+        file_handler = logging.FileHandler(fileLogName)
+        file_handler.setFormatter(formatter)
+
+        logger.addHandler(file_handler)
+        return logger
 
     def create_individual(self, searchSpace):
         ids = list(searchSpace.keys())
@@ -142,11 +165,12 @@ class GA:
             #decode and fitness calculation 
             #survivor selection
             #find best
-            
-            print(f'generation {i+1}')
-
+            self.logger.info(f'generation {i}')
+            print(f'generation {i}')
+         
             low_fitness = []
             u_tours = []
+
             for j in range(len(pop)):
                 # print(f'calculating fitness {j+1}')
                 t_route = copy.deepcopy(pop[j]) 
@@ -159,8 +183,13 @@ class GA:
 
             # print('average fitness:', self.pop_fitness(low_fitness))
             print('best fitness:', low_fitness[self.rank_pop(pop, low_fitness)[0][0]])
-            print('t_tour', pop[self.rank_pop(pop, low_fitness)[0][0]])
-            print('UAV tour:', u_tours[self.rank_pop(pop, low_fitness)[0][0]])
+            # print('t_tour', pop[self.rank_pop(pop, low_fitness)[0][0]])
+            # print('UAV tour:', u_tours[self.rank_pop(pop, low_fitness)[0][0]])
+            self.logger.info(f'average fitness: {self.pop_fitness(low_fitness)}')
+            self.logger.info(f'best fitness: {low_fitness[self.rank_pop(pop, low_fitness)[0][0]]}')
+            self.logger.info(f't_tour: {pop[self.rank_pop(pop, low_fitness)[0][0]]}')
+            self.logger.info(f'UAV tour: {u_tours[self.rank_pop(pop, low_fitness)[0][0]]}')
+            self.logger.info('=========================================================')
 
             next_pop = []
             while len(next_pop) < popSize - eliteSize:

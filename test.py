@@ -1,23 +1,49 @@
-from operator import le
-import random 
-from NBLEA import Low_GA, Map
+import logging
+from os import path, mkdir
 
-graph = Map.Map("Instances/6.5.3.txt")
+import sys
 
-ga = Low_GA.GA(graph, [4, 3 ,6 ,1 ,5 ,2])
 
-ga.run()
-# print(2*4 -1)
+def generateLogger(inputFile):
+    inputFileName = inputFile.replace('.txt', '')
+    inputFileName = inputFileName.replace('Instances/', '')
 
-a = [1, 2, 3 ,4 , 5, 6]
-b = [3, 1, 5 ,2 , 4]
-c = [a, b] 
-# for i in range(len(a)-1):
-#     a.insert(2*i + 1, 0)
-# print(a)
+    if not path.exists(f'result/{inputFileName}'):
+        mkdir(f'result/{inputFileName}')
+    fileLogName = f'result/{inputFileName}/{inputFileName}.log'
 
-# c.reverse()
-# print(crossover(a, b))
 
-# for i in range(1, 2):
-#     print(i)
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+
+    formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
+
+    file_handler = logging.FileHandler(fileLogName)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    return logger
+
+logger = generateLogger("Instances/10e.txt")
+
+class Employee:
+    """A sample Employee class"""
+
+    def __init__(self, first, last):
+        self.first = first
+        self.last = last
+
+        logger.info('Created Employee: {} - {}'.format(self.fullname, self.email))
+
+    @property
+    def email(self):
+        return '{}.{}@email.com'.format(self.first, self.last)
+
+    @property
+    def fullname(self):
+        return '{} {}'.format(self.first, self.last)
+
+
+emp_1 = Employee('John', 'Smith')
+emp_2 = Employee('Corey', 'Schafer')
+emp_3 = Employee('Jane', 'Doe')

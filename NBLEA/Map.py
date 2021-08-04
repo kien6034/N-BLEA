@@ -12,7 +12,7 @@ class Map:
         self.base = {'x': 0, 'y': 0}
         self.t_time = None
         self.d_time = None
-
+        self.fileName = fileName
         self.readFile(fileName)
         self.create_time_matrix()
     
