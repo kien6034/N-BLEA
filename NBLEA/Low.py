@@ -239,7 +239,8 @@ class Ant():
         route_details['uav_route'] = list()
 
         #[4, 0, 3, 0, 6, 0, 1, 0, 5, 0, 2]
-        test_chosen_idx = [0, 1, 2, 3, 4,5,6,7,8,9]
+     
+        test_chosen_idx = [0, 1, 2, 3, 4,5,6,7,8,9, 10]
 
         cost = dict()
 
@@ -252,8 +253,8 @@ class Ant():
             if C[i] == src: #if 2 node 0 in a row 
                 continue
 
-            if random.random() < (1 /(1+ np.exp(- pheromones[(src, C[i])]))): 
-            #if i in test_chosen_idx:
+            #if random.random() < (1 /(1+ np.exp(- pheromones[(src, C[i])]))): 
+            if i in test_chosen_idx:
                 #expected destination and expected travel time 
                 e_des = C[i]
                 e_travel_time = graph.d_time[src][e_des]
