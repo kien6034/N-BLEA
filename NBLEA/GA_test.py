@@ -142,22 +142,31 @@ class GA:
             #decode and fitness calculation 
             #survivor selection
             #find best
-            
+            print("=====================================")
             print(f'generation {i+1}')
 
             low_fitness = []
             u_tours = []
+            route_details = []
             for j in range(len(pop)):
                 # print(f'calculating fitness {j+1}')
                 t_route = copy.deepcopy(pop[j]) 
-                # print(t_route)
-                # print(TECHNICAN_NUMS)
-                cost, route_detail, u_tour = solver(self.graph, t_route) 
-                #technican fitness: tf ^ alpha * df ^ beta.
+                
+                # low ant
+                # cost, route_detail, u_tour = solver(self.graph, t_route) 
+
+                # low GA
+                low_GA = Low_GA.GA(self.graph, t_route)
+                cost, u_tour, route_detail = low_GA.run()
+
+                ### technican fitness: tf ^ alpha * df ^ beta.
+
                 low_fitness += [cost]
                 u_tours += [u_tour]
+                route_details += [route_detail]
 
             # print('average fitness:', self.pop_fitness(low_fitness))
+            # pprint.pprint(route_detail)
             print('best fitness:', low_fitness[self.rank_pop(pop, low_fitness)[0][0]])
             print('t_tour', pop[self.rank_pop(pop, low_fitness)[0][0]])
             print('UAV tour:', u_tours[self.rank_pop(pop, low_fitness)[0][0]])
