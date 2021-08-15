@@ -5,7 +5,7 @@ from NBLEA import Low_GA
 import random
 import operator
 import copy
-
+import matplotlib.pyplot as plt
 
 class GA:
     def __init__(self, graph) -> None:
@@ -135,6 +135,9 @@ class GA:
         # print(pop)
         # print(pop[0])
 
+        x = list()
+        y = list()
+
         for i in range(0, generations):
             #chosing parent 
             #cross over with prob pc 
@@ -170,6 +173,13 @@ class GA:
             print('best fitness:', low_fitness[self.rank_pop(pop, low_fitness)[0][0]])
             print('t_tour', pop[self.rank_pop(pop, low_fitness)[0][0]])
             print('UAV tour:', u_tours[self.rank_pop(pop, low_fitness)[0][0]])
+
+            x.append(i)
+            y.append(low_fitness[self.rank_pop(pop, low_fitness)[0][0]])
+
+            if i == generations - 1:
+                plt.plot(x, y)
+                plt.show()
 
             next_pop = []
             while len(next_pop) < popSize - eliteSize:

@@ -94,6 +94,7 @@ def sort_by_time(graph, specific_routes):
        
         t_back_time[tid] = travel_time + graph.t_time[path[-1]][0] #time that each technican gets back to base {'0': 132.3, '1': 212.23}
 
+    routes[0] = 0
     sorted_routes = dict(sorted(routes.items(), key= lambda item: item[1])) #route sorted in time order
  
     #find max cost 
@@ -155,9 +156,10 @@ class GA():
 
     def get_fitness(self, idv, sorted_routes, specific_routes):
         routes = list(sorted_routes.keys())
+    
 
         search_space = copy.deepcopy(sorted_routes)
-        search_space[0] = 0
+       
 
         C = list()
 
@@ -207,12 +209,12 @@ class GA():
                     endurance += e_travel_time
                 else:
                     #constrain 1: T
-                    #route details
-                    route_details['time_at_node'][next_node] = (search_space[next_node], u_time + e_travel_time)
-
-                    if endurance + e_travel_time + self.graph.d_time[e_des][0] > T: #make sure uav can fly back to base 
-                        
+                    if endurance + e_travel_time + self.graph.d_time[e_des][0] > T: 
+                        #if uav cannot flyback to base when chosing the e_des as next node 
+                        route_details['time_at_node'][next_node] = (search_space[next_node], -1)
                         continue
+                    else:
+                        route_details['time_at_node'][next_node] = (search_space[next_node], u_time + e_travel_time)
                     
                     e_uav_arrive_time = u_time + e_travel_time #expected uav arrival time 
                      
@@ -275,8 +277,16 @@ class GA():
         if len(uav_tour[k]) == 1: #case when there are only start node 0
             del uav_tour[k]
 
-        cost, wait_times = self.find_cost(time_at_nodes=route_details['time_at_node'], uav_tour=uav_tour, specific_routes=specific_routes)
-        route_details['wait_times'] = wait_times
+        
+        
+        lattest_node = list(search_space.keys())[-1]
+        work_time = search_space[lattest_node] + self.graph.t_time[lattest_node][0]
+     
+        if work_time > WORK_TIME:
+            cost = INFINITY
+        else:
+            cost, wait_times = self.find_cost(time_at_nodes=route_details['time_at_node'], uav_tour=uav_tour, specific_routes=specific_routes)
+            route_details['wait_times'] = wait_times
         return cost, route_details, uav_tour
     
     def find_cost(self, time_at_nodes, uav_tour, specific_routes):
@@ -434,7 +444,7 @@ class GA():
             
         return uav_tour
 
-    def run(self, popSize = 50, eliteSize = 2, mutationRate = 0.2, generations = 50):
+    def run(self, popSize = 50, eliteSize = 2, mutationRate = 0.2, generations = 20):
         specific_routes = get_specific_route(self.t_route)
         sorted_routes, t_back_time, max_cost = sort_by_time(self.graph, specific_routes)
         pop = self.init_pop(popSize, sorted_routes)

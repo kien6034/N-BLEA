@@ -238,11 +238,13 @@ class Ant():
         route_details['time_at_node'] = dict()
         route_details['uav_route'] = list()
 
-        #[4, 0, 3, 0, 6, 0, 1, 0, 5, 0, 2]
-        test_chosen_idx = [0, 1, 2, 3, 4,5,6,7,8,9]
+        #[4, 0, 6, 0, 3, 0, 5, 0, 2, 0, 1]
+        #[4, 0, 6, 0, 3, 0, 0, 1]
+       
+        test_chosen_idx = [0, 2, 3, 10]
 
         cost = dict()
-
+        chosen_idx = list()
         for i in range(0, len(C)):
             src = uav_tour[k][-1] #get last elemetn of uav tour k
             #for debug
@@ -263,14 +265,14 @@ class Ant():
                     endurance += e_travel_time
                 else:
                     #constrain 1: T
-                    #route details
-                    route_details['time_at_node'][next_node] = (search_space[next_node], u_time + e_travel_time)
-
-                    if endurance + e_travel_time + graph.d_time[e_des][0] > T: #make sure uav can fly back to base 
+                    if endurance + e_travel_time + graph.d_time[e_des][0] > T: 
+                        #if uav cannot flyback to base when chosing the e_des as next node 
+                        route_details['time_at_node'][next_node] = (search_space[next_node], -1)
                         continue
+                    else:
+                        route_details['time_at_node'][next_node] = (search_space[next_node], u_time + e_travel_time)
                     
                     e_uav_arrive_time = u_time + e_travel_time #expected uav arrival time 
-                     
 
                     if TECHNICAN_CAN_WAIT:
                         if e_uav_arrive_time > search_space[e_des]: #if uav come after technican
@@ -299,7 +301,8 @@ class Ant():
                         endurance += e_travel_time
 
                 uav_tour[k].append(e_des)
- 
+
+                
                 #check if close subtour  
                 if uav_tour[k][-1] == 0:
                     sub_route_data = {
@@ -319,18 +322,25 @@ class Ant():
             else:
                 if next_node != 0:
                     route_details['time_at_node'][next_node] = (search_space[next_node], -1)
-            
-        
+
 
         if uav_tour[k][-1] != 0:
             uav_tour[k].append(0)
-
+            sub_route_data = {
+                        'k': k,
+                        'route': uav_tour[k],
+                        'endurance': endurance,
+                    }
+            route_details['uav_route'].append(sub_route_data)
             u_time += graph.d_time[uav_tour[k][-1]][0]
 
         if len(uav_tour[k]) == 1: #case when there are only start node 0
             del uav_tour[k]
 
-        
+        print(search_space[-1])
+        if search_space[-1] > WORK_TIME:
+            print("exceed work time")
+
         cost, wait_time = self.find_cost(time_at_nodes=route_details['time_at_node'], uav_tour=uav_tour, search_space=search_space)
 
         route_details['wait_times'] = wait_time
@@ -341,13 +351,11 @@ class Ant():
         
         specific_route = copy.deepcopy(self.specific_routes)
         wait_times = dict()
-       
         
         for tid in self.specific_routes:
             
             path = self.specific_routes[tid]
             last_node = path[-1]
-            
             
             time_leave_last_node = max(time_at_nodes[last_node][0],time_at_nodes[last_node][1] )
             t_back_time[tid] = time_leave_last_node + graph.t_time[last_node][0]
@@ -385,7 +393,7 @@ class Ant():
         cost = 0
         for idx in wait_times:
             cost += wait_times[idx][0]
-        
+       
         return cost, wait_times
 
     def fitness(self, uav_tour,search_space, ispecific_routes, t_back_time, max_cost): 
