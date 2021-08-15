@@ -5,7 +5,6 @@ from NBLEA import Low_GA
 import random
 import operator
 import copy
-import matplotlib.pyplot as plt
 
 
 class GA:
@@ -28,23 +27,22 @@ class GA:
 
         return populations        
 
-    def rank_pop(self, pop, low_fitness):
+    def rank_pop(self, pop):
         fitness_results = {}
         
         for i in range(0, len(pop)):
-            fitness_results[i] = low_fitness[i]
+            fitness_results[i] = self.idv_fitness(pop[i])
 
         return sorted(fitness_results.items(), key = operator.itemgetter(1), reverse = False)
 
 
     def idv_fitness(self, idv):
-        #calculate travel distance 
-        cost =0 
-        for i in range(0, len(idv) - 1):
-            cost += self.graph.t_time[idv[i]][idv[i+1]]
-        
-        fitness = 1 / cost 
-        return fitness
+        #calculate wait time 
+
+        specific_route = Low_GA.get_specific_route(idv)
+        sorted_route, t_back_time, max_cost = Low_GA.sort_by_time(self.graph, specific_route)
+
+        return max_cost
 
     def pop_fitness(self, low_fitness):
         #calculate average fitness of population
@@ -60,15 +58,15 @@ class GA:
             elite_pop.append(pop[i[0]])
         return elite_pop
 
-    def tournament_selection(self, pop, low_fitness):
+    def tournament_selection(self, pop):
         # Selecting randomly 4 individuals to select 2 parents by a binary tournament
         parentIds = set()
         while len(parentIds) < 4:
             parentIds |= {random.randint(0, len(pop) - 1)}
         parentIds = list(parentIds)
         # Selecting 2 parents with the binary tournament
-        parent1 = pop[parentIds[0]] if low_fitness[parentIds[0]] < low_fitness[parentIds[1]] else pop[parentIds[1]]
-        parent2 = pop[parentIds[2]] if low_fitness[parentIds[2]] < low_fitness[parentIds[3]] else pop[parentIds[3]]
+        parent1 = pop[parentIds[0]] if self.idv_fitness(pop[parentIds[0]]) < self.idv_fitness(pop[parentIds[1]]) else pop[parentIds[1]]
+        parent2 = pop[parentIds[2]] if self.idv_fitness(pop[parentIds[2]]) < self.idv_fitness(pop[parentIds[3]]) else pop[parentIds[3]]
         return parent1, parent2
 
     def mutate(self, c, prob):
@@ -135,13 +133,6 @@ class GA:
         pop = self.init_Pop(popSize, self.search_space)
         # print(pop)
         # print(pop[0])
-        x = []
-        y = []
-        
-        plt.title('Instances/6.5.3')
-        plt.xlabel('Generations')
-        plt.ylabel('Cost')
-        
 
         for i in range(0, generations):
             #chosing parent 
@@ -150,58 +141,33 @@ class GA:
             #decode and fitness calculation 
             #survivor selection
             #find best
-            print("=====================================")
-            print(f'generation {i+1}')
 
-            low_fitness = []
-            u_tours = []
-            route_details = []
-            for j in range(len(pop)):
-                # print(f'calculating fitness {j+1}')
-                t_route = copy.deepcopy(pop[j]) 
-                
-                # low ant
-                # cost, route_detail, u_tour = solver(self.graph, t_route) 
-
-                # low GA
-                low_GA = Low_GA.GA(self.graph, t_route)
-                cost, u_tour, route_detail = low_GA.run()
-
-                ### technican fitness: tf ^ alpha * df ^ beta.
-
-                low_fitness += [cost]
-                u_tours += [u_tour]
-                route_details += [route_detail]
-
-            # print('average fitness:', self.pop_fitness(low_fitness))
-            # pprint.pprint(route_detail)
-            best_fitness = low_fitness[self.rank_pop(pop, low_fitness)[0][0]]
-            x.append(i)
-            y.append(best_fitness)
-            print('best fitness:', best_fitness)
-            print('t_tour', pop[self.rank_pop(pop, low_fitness)[0][0]])
-            print('UAV tour:', u_tours[self.rank_pop(pop, low_fitness)[0][0]])
 
             next_pop = []
             while len(next_pop) < popSize - eliteSize:
-                p1, p2 = self.tournament_selection(pop, low_fitness)
+                p1, p2 = self.tournament_selection(pop)
                 c1, c2 = self.crossover(p1, p2)
                 while c1 in pop and c2 in pop:
                     # print(c1, c2)
-                    p1, p2 = self.tournament_selection(pop, low_fitness)
+                    p1, p2 = self.tournament_selection(pop)
                     c1, c2 = self.crossover(p1, p2)
                 c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
                 next_pop += [c1, c2]
-            pop_ranked = self.rank_pop(pop, low_fitness)
+            pop_ranked = self.rank_pop(pop)
             elite_pop = self.selection(pop_ranked, pop, eliteSize)
             next_pop += elite_pop
             pop = next_pop
-
-
-        plt.plot(x, y)
-        plt.show()
             
-        
+            print("=====================================")
+            print(f'generation {i+1}')
+
+            t_route = pop[self.rank_pop(pop)[0][0]]
+            best_fitness = self.rank_pop(pop)[0][1]
+
+            print(f'best t_route: {t_route}')
+            print(f'best fitness: {best_fitness}')
+            
+        return t_route, best_fitness
         #find fitness of pop 
 
         """
@@ -218,6 +184,5 @@ class GA:
             endwhile 
 
             return best
-    """
-
+        """
 

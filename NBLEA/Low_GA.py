@@ -208,12 +208,14 @@ class GA():
                 else:
                     #constrain 1: T
                     #route details
-                    route_details['time_at_node'][next_node] = (search_space[next_node], u_time + e_travel_time)
 
                     if endurance + e_travel_time + self.graph.d_time[e_des][0] > T: #make sure uav can fly back to base 
-                        
+                        route_details['time_at_node'][next_node] = (search_space[next_node], -1)
                         continue
-                    
+                    else:
+                        route_details['time_at_node'][next_node] = (search_space[next_node], u_time + e_travel_time)
+
+
                     e_uav_arrive_time = u_time + e_travel_time #expected uav arrival time 
                      
 
