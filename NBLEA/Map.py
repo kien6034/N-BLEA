@@ -13,6 +13,7 @@ class Map:
         self.t_time = None
         self.d_time = None
 
+        self.fileName = fileName
         self.readFile(fileName)
         self.create_time_matrix()
     
@@ -40,8 +41,7 @@ class Map:
 
         nodes = copy.deepcopy(self.nodes)
 
-        
-        
+
         #add base to dict
         nodes[0] = {'x': 0, 'y': 0}
         nodes[num_length - 1] = {'x': 0, 'y': 0} 

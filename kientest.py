@@ -1,9 +1,15 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
- 
+from datetime import datetime
+
+
+start=datetime.now()
+
+
   
 # creating the dataset
+
 data = {'C':20, 'C++':15, 'Java':30,
         'Python':35}
 courses = list(data.keys())
@@ -19,3 +25,6 @@ plt.xlabel("Courses offered")
 plt.ylabel("No. of students enrolled")
 plt.title("Students enrolled in different courses")
 plt.show()
+#Statements
+
+print(datetime.now()-start)

@@ -6,12 +6,38 @@ import random
 import operator
 import copy
 import matplotlib.pyplot as plt
+import logging
+from os import path, mkdir
+from datetime import datetime
 
 class GA:
     def __init__(self, graph) -> None:
         self.graph = graph
         self.search_space = graph.nodes
+        self.result_dir = None
+        self.logger = self.generateLogger(self.graph.fileName)
+    
+    def generateLogger(self, inputFileDir):
+        inputFile = inputFileDir.replace('Instances/', '')
+        inputFileName = inputFile.replace('.txt', '')
 
+        if not path.exists(f'result/{inputFileName}'):
+            mkdir(f'result/{inputFileName}')
+        
+        self.result_dir = 'result/' + inputFileName
+        
+        fileLogName = f'result/{inputFileName}/{inputFileName}.log'
+
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.INFO)
+
+        formatter = logging.Formatter('%(message)s')
+
+        file_handler = logging.FileHandler(fileLogName)
+        file_handler.setFormatter(formatter)
+
+        logger.addHandler(file_handler)
+        return logger
 
     def create_individual(self, searchSpace):
         ids = list(searchSpace.keys())
@@ -138,6 +164,7 @@ class GA:
         x = list()
         y = list()
 
+        start = datetime.now()
         for i in range(0, generations):
             #chosing parent 
             #cross over with prob pc 
@@ -168,18 +195,24 @@ class GA:
                 u_tours += [u_tour]
                 route_details += [route_detail]
 
-            # print('average fitness:', self.pop_fitness(low_fitness))
-            # pprint.pprint(route_detail)
-            print('best fitness:', low_fitness[self.rank_pop(pop, low_fitness)[0][0]])
-            print('t_tour', pop[self.rank_pop(pop, low_fitness)[0][0]])
-            print('UAV tour:', u_tours[self.rank_pop(pop, low_fitness)[0][0]])
+            self.logger.info(f'average fitness: {self.pop_fitness(low_fitness)}')
+            self.logger.info(f'best fitness: {low_fitness[self.rank_pop(pop, low_fitness)[0][0]]}')
+            self.logger.info(f't_tour: {pop[self.rank_pop(pop, low_fitness)[0][0]]}')
+            self.logger.info(f'UAV tour: {u_tours[self.rank_pop(pop, low_fitness)[0][0]]}')
+            self.logger.info('=========================================================')
 
             x.append(i)
             y.append(low_fitness[self.rank_pop(pop, low_fitness)[0][0]])
 
+            
             if i == generations - 1:
+                plt.title(f'{self.graph.fileName}')
+                plt.xlabel('Generations')
+                plt.ylabel('Cost')
                 plt.plot(x, y)
-                plt.show()
+                
+                plt.savefig(f'{self.result_dir}/convergence.png')
+                plt.show()   
 
             next_pop = []
             while len(next_pop) < popSize - eliteSize:
@@ -196,7 +229,8 @@ class GA:
             next_pop += elite_pop
             pop = next_pop
             
-            
+        time_diff = datetime.now() - start 
+        self.logger.info(f'RUNNING TIME: {time_diff}')
         
         #find fitness of pop 
 

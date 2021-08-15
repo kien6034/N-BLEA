@@ -444,7 +444,7 @@ class GA():
             
         return uav_tour
 
-    def run(self, popSize = 50, eliteSize = 2, mutationRate = 0.2, generations = 20):
+    def run(self, popSize = 100, eliteSize = 2, mutationRate = 0.2, generations = 20):
         specific_routes = get_specific_route(self.t_route)
         sorted_routes, t_back_time, max_cost = sort_by_time(self.graph, specific_routes)
         pop = self.init_pop(popSize, sorted_routes)
