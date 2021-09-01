@@ -24,7 +24,8 @@ def get_specific_route(t_route):
     #         k = 0
     # return routes
 
-    routes = dict()
+    # routes = dict()
+    routes = {}
 
     num_nodes = len(t_route) - 1
     sub_end_points = list(range(num_nodes + 1, num_nodes + TECHNICAN_NUMS))
@@ -40,13 +41,15 @@ def get_specific_route(t_route):
         else:
             routes[k].append(t_route[index]) 
     
-    new_routes = dict()
+    # new_routes = dict()
+    new_routes = {}
     for tid in routes:
         if routes[tid]: 
             new_routes[len(new_routes)] = routes[tid]
         else:
             ACTIVE_TECH -= 1
-            
+
+
     return new_routes
 
 def sort_by_time(graph, specific_routes):
