@@ -155,7 +155,16 @@ class GA:
 
         return c1, c2
 
+
+    def log_params(self):
+        self.logger.info(f'_CONSTRAINs_: WORK TIME: {WORK_TIME} - FLY TIME: {T}')
+        self.logger.info(f'CONSTRAINS: WORK TIME: {WORK_TIME} - FLY TIME: {T}')
+        
+        
+
     def run(self, popSize = POP_SIZE, eliteSize = ELITE_SIZE, mutationRate = MUTATION_RATE, generations = GENERATIONS):
+        self.log_params()
+
         # init pop 
         pop = self.init_Pop(popSize, self.search_space)
         # print(pop)

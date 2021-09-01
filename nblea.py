@@ -5,7 +5,7 @@ from NBLEA import Map as map
 from NBLEA import GA, GA_test 
 
 
-graph = map.Map("Instances/10.10.3.txt")
+graph = map.Map("Instances/12.20.1.txt")
 
 # sys.exit()
 
