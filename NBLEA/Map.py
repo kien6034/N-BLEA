@@ -7,16 +7,15 @@ import copy, math
 
 class Map:
     def __init__(self, fileName) -> None:
+        self.fileName = fileName
         self.nodes = dict() #x,y  - base
-        
         self.base = {'x': 0, 'y': 0}
         self.t_time = None
         self.d_time = None
 
         self.readFile(fileName)
         self.create_time_matrix()
-    
-  
+
     def readFile(self, fileName):
         # print("Reading file ...")
         f = open(fileName, "r")
