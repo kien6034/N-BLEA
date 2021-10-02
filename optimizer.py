@@ -25,7 +25,8 @@ def run(run_type, file_inputs, u_params, l_params, exports):
                             eliteSize = u_params['elite_size'], 
                             mutationRate =u_params['mutation_rate'],
                             technican_num = run_type['technican_num'],
-                            create_sample = u_params['create_sample'])
+                            create_sample = u_params['create_sample'],
+                            l_params=l_params),
             elif run_type['level'] == "lower":
                 #read data
                 #call low level 

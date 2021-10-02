@@ -23,12 +23,12 @@ class Map:
         return self.__nodes
 
     @property
-    def ttime(self, i, j):
-        return self.ttime[i, j]
+    def ttime(self):
+        return self.__ttime
     
     @property
-    def dtime(self, i, j):
-        return self.dtime[i, j]
+    def dtime(self):
+        return self.__dtime
 
     def readFile(self, fileName):
         # print("Reading file ...")
