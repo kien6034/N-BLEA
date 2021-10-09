@@ -197,13 +197,13 @@ class Lower:
         
         lattest_node = list(search_space.keys())[-1]
         work_time = search_space[lattest_node] + self.graph.ttime[lattest_node][0]
-     
+        
         if work_time > self.l_params['work_time']:
             cost = INFINITY
         else:
             cost, wait_times = self.find_cost(time_at_nodes=route_details['time_at_node'], uav_tour=uav_tour, specific_routes=specific_routes)
             route_details['wait_times'] = wait_times
-        return cost, route_details, uav_tour
+        return cost, route_details, uav_tour, work_time
     
     def find_cost(self, time_at_nodes, uav_tour, specific_routes):
 
@@ -264,11 +264,12 @@ class Lower:
 
         for i in range(popSize):
             new_idv = np.zeros(2*len(sorted_routes)-1, dtype=np.int8)
-            # while new_idv.tolist() in populations.tolist():
             for j in range(len(new_idv)):
                 new_idv[j] = random.randint(0, 1)
+            while new_idv.tolist() in populations.tolist():
+                for j in range(len(new_idv)):
+                    new_idv[j] = random.randint(0, 1)
             populations[i] = new_idv
-
         return populations
 
     def mutate(self, c, prob):
@@ -326,7 +327,7 @@ class Lower:
         sorted_routes, t_back_time, max_cost = self.sort_by_time(specific_route)
         pop = self.init_pop(popSize, sorted_routes)
 
-        # print(specific_route)
+        
         # print(self.sort_by_time(specific_route))
         # print(pop)
         # print(pop[0], pop[1])
@@ -350,8 +351,9 @@ class Lower:
                 #     pop_details += [cal_pop[idv][2]]
                 # else:
 
-                cost, route_details, uav_tour = self.get_fitness(idv, sorted_routes, specific_route)
-
+                cost, route_details, uav_tour, work_time = self.get_fitness(idv, sorted_routes, specific_route)
+                route_details['number_of_tech'] = self.technican_num
+                route_details['work_time'] = max_cost
             
                 pop_fitness += [cost]
                 uav_tours += [uav_tour]

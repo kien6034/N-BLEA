@@ -1,12 +1,14 @@
 import random
 from Optimizers.Parameter import *
 from Optimizers.Lower import Lower
+from Optimizers.Utils import hamming_distance
 import numpy as np
 import sys
 import operator
 from os import path, mkdir
 import time
 import distance
+import pprint
 
 
 class Upper:
@@ -19,6 +21,8 @@ class Upper:
         for i in range(popSize):
             gen = np.arange(1, (self.graph.numNodes + technican_num - 1))
             np.random.shuffle(gen)
+            while gen.tolist() in pop.tolist():
+                np.random.shuffle(gen)
             pop[i] = gen
 
         # if create_sample:
@@ -118,7 +122,9 @@ class Upper:
         
         def is_diff(idv, chosen_pop, count):
             for i in range(count):
-                if distance.hamming(idv.tostring(), chosen_pop[i].tostring()) < len(idv) / 4:
+                # if distance.hamming(idv.tostring(), chosen_pop[i].tostring()) < len(idv) / 4:
+                #     return False
+                if hamming_distance(idv, chosen_pop[i], self.graph.numNodes) < len(idv) / 4:
                     return False
             return True
 
@@ -157,15 +163,6 @@ class Upper:
 
     def run(self, popSize, eliteSize, mutationRate, generations, technican_num, create_sample, l_params):
         pop = self.init_Pop(popSize, technican_num, create_sample)
-
-        # lower_fitness = np.zeros((popSize), dtype=np.int16)
-        # pop_ranked = self.rank_pop(pop, lower_fitness)
-        # print(pop)
-        # print(self.mutate(pop[0], mutationRate))
-        # print(self.crossover(pop[0], pop[1]))
-        # print(self.tournament_selection(pop, lower_fitness))
-        # print(self.rank_pop(pop, lower_fitness))
-        # print(self.select_elite(pop_ranked, pop, eliteSize, technican_num))
 
         cal_pop = {}
         start = time.time()
@@ -213,11 +210,11 @@ class Upper:
                     u_tours += [u_tour]
                     route_details += [route_detail]
 
-            # print('average fitness:', self.pop_fitness(low_fitness))
-            # pprint.pprint(route_detail)
-            # print('t_tour', pop[self.rank_pop(pop, low_fitness)[0][0]])
-            # print('UAV tour:', u_tours[self.rank_pop(pop, low_fitness)[0][0]])
-            print('cost:', low_fitness[self.rank_pop(pop, low_fitness)[0]])
+
+            best_idv = pop[self.rank_pop(pop, low_fitness)[0]]
+            best_id = ''.join(map(str, best_idv))
+            best_idv_detail = cal_pop[best_id]
+            print('cost:', best_idv_detail[0])
 
             pop_ranked = self.rank_pop(pop, low_fitness)
             next_pop = self.select_elite(pop_ranked, pop, eliteSize, technican_num)
@@ -236,21 +233,12 @@ class Upper:
             pop = next_pop
 
         run_time = time.time() - start
-        print(run_time)
-        print(len(cal_pop))
+        print("total idv:", len(cal_pop))
+        return best_idv_detail, run_time
 
 
     def run1(self, popSize, eliteSize, mutationRate, generations, technican_num, create_sample, l_params):
         pop = self.init_Pop(popSize, technican_num, create_sample)
-
-        # lower_fitness = np.zeros((popSize), dtype=np.int16)
-        # pop_ranked = self.rank_pop(pop, lower_fitness)
-        # print(pop)
-        # print(self.mutate(pop[0], mutationRate))
-        # print(self.crossover(pop[0], pop[1]))
-        # print(self.tournament_selection(pop, lower_fitness))
-        # print(self.rank_pop(pop, lower_fitness))
-        # print(self.select_elite(pop_ranked, pop, eliteSize, technican_num))
 
         cal_pop = {}
         start = time.time()
@@ -290,11 +278,10 @@ class Upper:
                     u_tours += [u_tour]
                     route_details += [route_detail]
 
-            # print('average fitness:', self.pop_fitness(low_fitness))
-            # pprint.pprint(route_detail)
-            # print('t_tour', pop[self.rank_pop(pop, low_fitness)[0][0]])
-            # print('UAV tour:', u_tours[self.rank_pop(pop, low_fitness)[0][0]])
-            print('cost:', low_fitness[self.rank_pop(pop, low_fitness)[0]])
+            best_idv = pop[self.rank_pop(pop, low_fitness)[0]]
+            best_id = ''.join(map(str, best_idv))
+            best_idv_detail = cal_pop[best_id]
+            print('cost:', best_idv_detail[0])
 
             pop_ranked = self.rank_pop(pop, low_fitness)
             next_pop = self.select_elite(pop_ranked, pop, eliteSize, technican_num)
@@ -313,6 +300,6 @@ class Upper:
             pop = next_pop
 
         run_time = time.time() - start
+        print("total idv:", len(cal_pop))
         print(run_time)
-        print(len(cal_pop))
 
