@@ -327,7 +327,7 @@ class Lower:
         sorted_routes, t_back_time, max_cost = self.sort_by_time(specific_route)
         pop = self.init_pop(popSize, sorted_routes)
 
-        
+        # print(specific_route)
         # print(self.sort_by_time(specific_route))
         # print(pop)
         # print(pop[0], pop[1])
@@ -353,7 +353,7 @@ class Lower:
 
                 cost, route_details, uav_tour, work_time = self.get_fitness(idv, sorted_routes, specific_route)
                 route_details['number_of_tech'] = self.technican_num
-                route_details['work_time'] = max_cost
+                route_details['work_time'] = work_time
             
                 pop_fitness += [cost]
                 uav_tours += [uav_tour]

@@ -144,6 +144,12 @@ class Upper:
         # print(i)
         # print(elite_pop)
         return elite_pop
+    
+    def select_elite1(self, pop_ranked, pop, eliteSize):
+        elite_pop = []
+        for i in pop_ranked[:eliteSize]:
+            elite_pop.append(pop[i])
+        return np.array(elite_pop, dtype=np.int16)
 
     def rank_pop(self, pop, low_fitness):
         fitness_results = {}
@@ -217,12 +223,13 @@ class Upper:
             print('cost:', best_idv_detail[0])
 
             pop_ranked = self.rank_pop(pop, low_fitness)
-            next_pop = self.select_elite(pop_ranked, pop, eliteSize, technican_num)
+            # next_pop = self.select_elite(pop_ranked, pop, eliteSize, technican_num)
+            next_pop = self.select_elite1(pop_ranked, pop, eliteSize)
             while len(next_pop) < popSize - eliteSize:
                 p1, p2 = self.tournament_selection(pop, upper_fitness)
                 c1, c2 = self.crossover(p1, p2)
                 while c1.tolist() in next_pop.tolist() and c2.tolist() in next_pop.tolist():
-                    # print(c1, c2)
+                    print(c1, c2)
                     p1, p2 = self.tournament_selection(pop, upper_fitness)
                     c1, c2 = self.crossover(p1, p2)
                 c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
@@ -250,7 +257,9 @@ class Upper:
             low_fitness = []
             u_tours = []
             route_details = []
-            # print(l_params['pop_size'], l_params['elite_size'], l_params['mutation_rate'], l_params['generations'])
+
+            
+            
             for j in range(len(pop)):
                 # print(f'calculating fitness {j+1}')
                 
@@ -300,6 +309,8 @@ class Upper:
             pop = next_pop
 
         run_time = time.time() - start
-        print("total idv:", len(cal_pop))
         print(run_time)
+        print(len(cal_pop))
+
+        return best_idv_detail, run_time
 

@@ -3,14 +3,15 @@ import optimizer
 run_type = {
     'level': 'upper',
     'technican_num': 3,
-    'num_of_runs': 1
+    'num_of_runs': 10,
+    'run_version': 1
 }
 
 file_inputs = {
     'input_folder': 'Instances/',
     # 'num_nodes': [6, 10, 12, 20],
-    # 'range': [5, 10, 20],
-    # 'file_num': [1, 2, 3, 4]
+    # 'range': [5, 10],
+    # 'file_num': [3]
     'num_nodes': [6],
     'range': [5],
     'file_num': [3]
@@ -18,8 +19,8 @@ file_inputs = {
 
 u_params = {
     'create_sample': 'txt',
-    'generations': 50,
-    'pop_size': 50,
+    'generations': 30,
+    'pop_size': 60,
     'elite_size': 15,
     'mutation_rate':  0.1,
 }
@@ -35,7 +36,8 @@ l_params = {
 }
 
 exports= {
-
+    'to_excel': False
 }
 
-optimizer.run(run_type=run_type, file_inputs= file_inputs, u_params=u_params, l_params=l_params, exports= exports)
+if __name__=="__main__":
+    optimizer.run(run_type=run_type, file_inputs= file_inputs, u_params=u_params, l_params=l_params, exports= exports)

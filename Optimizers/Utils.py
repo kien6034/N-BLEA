@@ -112,7 +112,5 @@ def save_solution(instance, run_time, number_of_tech, cost, work_time, version):
 if __name__ == "__main__":
     i1 = [2, 8, 5, 7, 3, 4, 6, 1]
     i2 = [6, 3, 4, 2, 8, 7, 1, 5]
-    # i1 = [1, 3, 5, 7, 2, 6, 4]
-    # i2 = [2, 6, 4, 7, 1, 3 ,5]
     ds = hamming_distance(i1, i2, 6)
     print(ds)
