@@ -262,7 +262,6 @@ class Upper:
         print("total idv:", len(cal_pop))
         return best_idv_detail, run_time
 
-
     def run1(self, popSize, eliteSize, mutationRate, generations, technican_num, create_sample, l_params):
         pop = self.init_Pop(popSize, technican_num, create_sample)
 
@@ -391,6 +390,7 @@ class Upper:
             route_details = []
 
             upper_fitness = []
+
             
             for j in range(len(pop)):
                 # cal upper fitness
@@ -399,8 +399,14 @@ class Upper:
             pop_ranked = self.rank_pop(pop, upper_fitness)
             pop = np.array(list(map(lambda x: pop[x], pop_ranked)), dtype=np.int16)
             upper_fitness = list(map(lambda x: upper_fitness[x], pop_ranked))
-            # print(pop)
-            for j in range(len(pop)//2):
+
+            run_list = []
+            run_list = self.get_diff_pop(pop)
+            print(len(run_list))
+            
+            count = 0
+            s = time.time()
+            for j in run_list:
                 t_route = pop[j][:]
 
                 idv = ''.join(map(str, pop[j]))
@@ -409,13 +415,14 @@ class Upper:
                     u_tours += [cal_pop[idv][1]]
                     route_details += [cal_pop[idv][2]]
                 else:
-
+                    count += 1
                     # lower GA
                     lower_GA = Lower(self.graph, t_route, l_params, technican_num)
                     cost, u_tour, route_detail = lower_GA.run(popSize=l_params['pop_size'], 
                                                         eliteSize=l_params['elite_size'], 
                                                         mutationRate=l_params['mutation_rate'], 
-                                                        generations=l_params['generations'])
+                                                        generations=l_params['generations'],
+                                                        check_dup=False)
 
                     ### technican fitness: tf ^ alpha * df ^ beta.
 
@@ -425,6 +432,21 @@ class Upper:
                     u_tours += [u_tour]
                     route_details += [route_detail]
 
+            print(count)
+            print("lower time:", time.time()-s)
+
+            if len(run_list) < len(pop):
+                pop_ranked = self.rank_pop(pop, low_fitness)
+                low_fitness = list(map(lambda x: low_fitness[x], pop_ranked))
+                adjusted_pop = []
+                for i in run_list:
+                    adjusted_pop.append(i)
+                adjusted_pop = list(map(lambda x: adjusted_pop[x], pop_ranked))
+                for i in range(len(pop)):
+                    if i not in run_list:
+                        adjusted_pop.append(i)
+                pop = np.array(list(map(lambda x: pop[x], adjusted_pop)), dtype=np.int16)
+                upper_fitness = list(map(lambda x: upper_fitness[x], adjusted_pop))
 
             best_idv = pop[self.rank_pop(pop, low_fitness)[0]]
             best_id = ''.join(map(str, best_idv))
@@ -434,11 +456,11 @@ class Upper:
             pop_ranked = self.rank_pop(pop, low_fitness)
             # next_pop = self.select_elite(pop_ranked, pop, eliteSize, technican_num)
             next_pop = self.select_elite1(pop_ranked, pop, eliteSize)
-            while len(next_pop) < popSize - eliteSize:
+            while len(next_pop) < popSize:
                 p1, p2 = self.tournament_selection(pop, upper_fitness)
                 c1, c2 = self.crossover(p1, p2)
                 while c1.tolist() in next_pop.tolist() and c2.tolist() in next_pop.tolist():
-                    print(c1, c2)
+                    # print(c1, c2)
                     p1, p2 = self.tournament_selection(pop, upper_fitness)
                     c1, c2 = self.crossover(p1, p2)
                 c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
@@ -450,4 +472,5 @@ class Upper:
 
         run_time = time.time() - start
         print("total idv:", len(cal_pop))
+        print("run_time:", run_time)
         return best_idv_detail, run_time
