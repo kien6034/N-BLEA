@@ -167,7 +167,216 @@ class Upper:
         # sys.exit()
         return np.array(list(map(lambda x: x[0], pop_ranked)), dtype=np.int16)
 
+    def get_diff_pop(self, pop):
+
+        def is_diff(idv, chosen_pop, count):
+            for i in range(count):
+                # if distance.hamming(idv.tostring(), chosen_pop[i].tostring()) < len(idv) / 4:
+                #     return False
+                if hamming_distance(idv, pop[chosen_pop[i]], self.graph.numNodes) < len(idv) / 4:
+                    return False
+            return True
+
+        chosen_pop = []        
+        for i in range(len(pop)):
+            if i ==0 or is_diff(pop[i], chosen_pop, len(chosen_pop)):
+                chosen_pop += [i]
+            if len(chosen_pop) >= len(pop) // 2:
+                break
+        return chosen_pop
+
     def run(self, popSize, eliteSize, mutationRate, generations, technican_num, create_sample, l_params):
+        pop = self.init_Pop(popSize, technican_num, create_sample)
+
+        cal_pop = {}
+        start = time.time()
+        for i in range(0, generations):
+            print("=====================================")
+            print(f'generation {i+1}')
+
+            # low_fitness = np.zeros((popSize//2), dtype=np.float32)
+            low_fitness = []
+            u_tours = []
+            route_details = []
+
+            upper_fitness = []
+            
+            for j in range(len(pop)):
+                # cal upper fitness
+                upper_fitness += [self.fitness(pop[j], l_params, technican_num)]
+
+            pop_ranked = self.rank_pop(pop, upper_fitness)
+            pop = np.array(list(map(lambda x: pop[x], pop_ranked)), dtype=np.int16)
+            upper_fitness = list(map(lambda x: upper_fitness[x], pop_ranked))
+            # print(pop)
+            for j in range(len(pop)//2):
+                t_route = pop[j][:]
+
+                idv = ''.join(map(str, pop[j]))
+                if idv in cal_pop:
+                    low_fitness += [cal_pop[idv][0]]
+                    u_tours += [cal_pop[idv][1]]
+                    route_details += [cal_pop[idv][2]]
+                else:
+
+                    # lower GA
+                    lower_GA = Lower(self.graph, t_route, l_params, technican_num)
+                    cost, u_tour, route_detail = lower_GA.run(popSize=l_params['pop_size'], 
+                                                        eliteSize=l_params['elite_size'], 
+                                                        mutationRate=l_params['mutation_rate'], 
+                                                        generations=l_params['generations'])
+
+                    ### technican fitness: tf ^ alpha * df ^ beta.
+
+                    cal_pop[idv] = (cost, u_tour, route_detail)
+
+                    low_fitness += [cost]
+                    u_tours += [u_tour]
+                    route_details += [route_detail]
+
+
+            best_idv = pop[self.rank_pop(pop, low_fitness)[0]]
+            best_id = ''.join(map(str, best_idv))
+            best_idv_detail = cal_pop[best_id]
+            print('cost:', best_idv_detail[0])
+
+            pop_ranked = self.rank_pop(pop, low_fitness)
+            # next_pop = self.select_elite(pop_ranked, pop, eliteSize, technican_num)
+            next_pop = self.select_elite1(pop_ranked, pop, eliteSize)
+            while len(next_pop) < popSize:
+                p1, p2 = self.tournament_selection(pop, upper_fitness)
+                c1, c2 = self.crossover(p1, p2)
+                while c1.tolist() in next_pop.tolist() and c2.tolist() in next_pop.tolist():
+                    print(c1, c2)
+                    p1, p2 = self.tournament_selection(pop, upper_fitness)
+                    c1, c2 = self.crossover(p1, p2)
+                c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
+                # next_pop += [c1, c2]
+                next_pop = np.concatenate((next_pop, np.array([c1, c2], dtype=np.int16)))
+            # elite_pop = self.selection(pop_ranked, pop, eliteSize)
+            # next_pop += elite_pop
+            pop = next_pop
+
+        run_time = time.time() - start
+        print(run_time)
+        print("total idv:", len(cal_pop))
+        return best_idv_detail, run_time
+
+
+    def run1(self, popSize, eliteSize, mutationRate, generations, technican_num, create_sample, l_params):
+        pop = self.init_Pop(popSize, technican_num, create_sample)
+
+        cal_pop = {}
+        start = time.time()
+        for i in range(0, generations):
+            print("=====================================")
+            print(f'generation {i+1}')
+
+            # low_fitness = np.zeros((popSize), dtype=np.float32)
+            low_fitness = []
+            u_tours = []
+            route_details = []
+
+            run_list = []
+            # if i == 0:
+            #     run_list = range(len(pop))
+            # else:
+            #     run_list = self.get_diff_pop(pop)
+            #     print(len(run_list))
+            run_list = self.get_diff_pop(pop)
+            print(len(run_list))
+            
+            count = 0
+            s = time.time()
+            for j in run_list:
+                # print(f'calculating fitness {j+1}')
+                
+                t_route = pop[j][:]
+                idv = ''.join(map(str, pop[j]))
+                if idv in cal_pop:
+                    low_fitness += [cal_pop[idv][0]]
+                    u_tours += [cal_pop[idv][1]]
+                    route_details += [cal_pop[idv][2]]
+                else:
+                    count += 1
+                    # lower GA
+                    lower_GA = Lower(self.graph, t_route, l_params, technican_num)
+                    cost, u_tour, route_detail = lower_GA.run(popSize=l_params['pop_size'], 
+                                                        eliteSize=l_params['elite_size'], 
+                                                        mutationRate=l_params['mutation_rate'], 
+                                                        generations=l_params['generations'],
+                                                        check_dup=False)
+
+                    ### technican fitness: tf ^ alpha * df ^ beta.
+
+                    cal_pop[idv] = (cost, u_tour, route_detail)
+
+                    low_fitness += [cost]
+                    u_tours += [u_tour]
+                    route_details += [route_detail]
+
+            print(count)
+            print("lower time:", time.time()-s)
+
+            if len(run_list) < len(pop):
+            #     pop_ranked = self.rank_pop(pop, low_fitness)
+            #     pop = np.array(list(map(lambda x: pop[x], pop_ranked)), dtype=np.int16)
+            #     low_fitness = list(map(lambda x: low_fitness[x], pop_ranked))
+            # else: 
+                adjusted_pop = []
+                for i in run_list:
+                    adjusted_pop.append(pop[i])
+                pop_ranked = self.rank_pop(pop, low_fitness)
+                adjusted_pop = list(map(lambda x: adjusted_pop[x], pop_ranked))
+                low_fitness = list(map(lambda x: low_fitness[x], pop_ranked))
+                for i in range(len(pop)):
+                    if i not in run_list:
+                        adjusted_pop.append(pop[i])
+                pop = np.array(adjusted_pop, dtype=np.int16)
+
+            best_idv = pop[self.rank_pop(pop, low_fitness)[0]]
+            best_id = ''.join(map(str, best_idv))
+            best_idv_detail = cal_pop[best_id]
+            print('cost:', best_idv_detail[0])
+
+            pop_ranked = self.rank_pop(pop, low_fitness)
+            # next_pop = self.select_elite(pop_ranked, pop, eliteSize, technican_num)
+            next_pop = self.select_elite1(pop_ranked, pop, eliteSize)
+            while len(next_pop) < popSize:
+                if len(next_pop) < popSize//2 + popSize//3:
+                    p1, p2 = self.tournament_selection(pop[:popSize//2], low_fitness)
+                    c1, c2 = self.crossover(p1, p2)
+                    while c1.tolist() in next_pop.tolist() and c2.tolist() in next_pop.tolist():
+                        # print(1, c1, c2)
+                        p1, p2 = self.tournament_selection(pop[:popSize//2], low_fitness)
+                        c1, c2 = self.crossover(p1, p2)
+                    c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
+                elif len(next_pop) < popSize:
+                    p_i1, p_i2 = random.randint(0, popSize//2), random.randint(popSize//2 + 1, popSize-1)
+                    c1, c2 = self.crossover(pop[p_i1], pop[p_i2])
+                    while c1.tolist() in next_pop.tolist() and c2.tolist() in next_pop.tolist():
+                        # print(2, c1, c2)
+                        p_i1, p_i2 = random.randint(0, popSize//2), random.randint(popSize//2 + 1, popSize-1)
+                        c1, c2 = self.crossover(pop[p_i1], pop[p_i2])
+                    c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
+                # else:
+                #     p_i1, p_i2 = random.randint(popSize//2 + 1, popSize-1), random.randint(popSize//2 + 1, popSize-1)
+                #     c1, c2 = self.crossover(pop[p_i1], pop[p_i2])
+                #     while c1.tolist() in next_pop.tolist() and c2.tolist() in next_pop.tolist():
+                #         print(3, c1, c2)
+                #         p_i1, p_i2 = random.randint(0, popSize//2), random.randint(popSize//2 + 1, popSize-1)
+                #         c1, c2 = self.crossover(pop[p_i1], pop[p_i2])
+                #     c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
+                next_pop = np.concatenate((next_pop, np.array([c1, c2], dtype=np.int16)))
+            pop = next_pop
+
+        run_time = time.time() - start
+        print(run_time)
+        print(len(cal_pop))
+
+        return best_idv_detail, run_time
+
+    def run2(self, popSize, eliteSize, mutationRate, generations, technican_num, create_sample, l_params):
         pop = self.init_Pop(popSize, technican_num, create_sample)
 
         cal_pop = {}
@@ -242,75 +451,3 @@ class Upper:
         run_time = time.time() - start
         print("total idv:", len(cal_pop))
         return best_idv_detail, run_time
-
-
-    def run1(self, popSize, eliteSize, mutationRate, generations, technican_num, create_sample, l_params):
-        pop = self.init_Pop(popSize, technican_num, create_sample)
-
-        cal_pop = {}
-        start = time.time()
-        for i in range(0, generations):
-            print("=====================================")
-            print(f'generation {i+1}')
-
-            # low_fitness = np.zeros((popSize), dtype=np.float32)
-            low_fitness = []
-            u_tours = []
-            route_details = []
-
-            
-            
-            for j in range(len(pop)):
-                # print(f'calculating fitness {j+1}')
-                
-                t_route = pop[j][:]
-
-                idv = ''.join(map(str, pop[j]))
-                if idv in cal_pop:
-                    low_fitness += [cal_pop[idv][0]]
-                    u_tours += [cal_pop[idv][1]]
-                    route_details += [cal_pop[idv][2]]
-                else:
-
-                    # lower GA
-                    lower_GA = Lower(self.graph, t_route, l_params, technican_num)
-                    cost, u_tour, route_detail = lower_GA.run(popSize=l_params['pop_size'], 
-                                                        eliteSize=l_params['elite_size'], 
-                                                        mutationRate=l_params['mutation_rate'], 
-                                                        generations=l_params['generations'])
-
-                    ### technican fitness: tf ^ alpha * df ^ beta.
-
-                    cal_pop[idv] = (cost, u_tour, route_detail)
-
-                    low_fitness += [cost]
-                    u_tours += [u_tour]
-                    route_details += [route_detail]
-
-            best_idv = pop[self.rank_pop(pop, low_fitness)[0]]
-            best_id = ''.join(map(str, best_idv))
-            best_idv_detail = cal_pop[best_id]
-            print('cost:', best_idv_detail[0])
-
-            pop_ranked = self.rank_pop(pop, low_fitness)
-            next_pop = self.select_elite(pop_ranked, pop, eliteSize, technican_num)
-            while len(next_pop) < popSize - eliteSize:
-                p1, p2 = self.tournament_selection(pop, low_fitness)
-                c1, c2 = self.crossover(p1, p2)
-                while c1.tolist() in next_pop.tolist() and c2.tolist() in next_pop.tolist():
-                    # print(c1, c2)
-                    p1, p2 = self.tournament_selection(pop, low_fitness)
-                    c1, c2 = self.crossover(p1, p2)
-                c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
-                # next_pop += [c1, c2]
-                next_pop = np.concatenate((next_pop, np.array([c1, c2], dtype=np.int16)))
-            # elite_pop = self.selection(pop_ranked, pop, eliteSize)
-            # next_pop += elite_pop
-            pop = next_pop
-
-        run_time = time.time() - start
-        print(run_time)
-        print(len(cal_pop))
-
-        return best_idv_detail, run_time
-

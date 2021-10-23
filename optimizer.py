@@ -37,6 +37,14 @@ def run(run_type, file_inputs, u_params, l_params, exports):
                                 technican_num = run_type['technican_num'],
                                 create_sample = u_params['create_sample'],
                                 l_params=l_params)
+                elif run_type['run_version'] == 3:
+                    best_solution, run_time = optimizer.run2(popSize= u_params['pop_size'],
+                                generations = u_params['generations'], 
+                                eliteSize = u_params['elite_size'], 
+                                mutationRate =u_params['mutation_rate'],
+                                technican_num = run_type['technican_num'],
+                                create_sample = u_params['create_sample'],
+                                l_params=l_params)
 
                 if exports['to_excel']:
                     save_solution(instance=graph.fileName, 

@@ -322,7 +322,7 @@ class Lower:
             elite_pop[i] = pop[idx]
         return elite_pop
 
-    def run(self, popSize, eliteSize, mutationRate, generations):
+    def run(self, popSize, eliteSize, mutationRate, generations, check_dup = True):
         specific_route = self.get_specific_route(self.t_route)
         sorted_routes, t_back_time, max_cost = self.sort_by_time(specific_route)
         pop = self.init_pop(popSize, sorted_routes)
@@ -374,9 +374,11 @@ class Lower:
             while len(next_pop) < popSize - eliteSize:
                 p1, p2 = self.tournament_selection(pop, pop_fitness)
                 c1, c2 = self.crossover(p1, p2)
-                while c1.tolist() in next_pop.tolist() and c2.tolist() in next_pop.tolist():
-                    p1, p2 = self.tournament_selection(pop, pop_fitness)
-                    c1, c2 = self.crossover(p1, p2)
+                if check_dup:
+                    while c1.tolist() in next_pop.tolist() and c2.tolist() in next_pop.tolist():
+                        # print("l", c1, c2)
+                        p1, p2 = self.tournament_selection(pop, pop_fitness)
+                        c1, c2 = self.crossover(p1, p2)
                 c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
                 # next_pop += [c1, c2]
                 next_pop = np.concatenate((next_pop, np.array([c1, c2], dtype=np.int8)))

@@ -4,7 +4,7 @@ run_type = {
     'level': 'upper',
     'technican_num': 3,
     'num_of_runs': 10,
-    'run_version': 1
+    'run_version': 2
 }
 
 file_inputs = {
