@@ -259,10 +259,11 @@ class Lower:
         
         return cost, wait_times
 
-    def init_pop(self, popSize, sorted_routes): 
+    def init_pop(self, popSize, sorted_routes, preOptima): 
         populations = np.zeros((popSize, 2*len(sorted_routes)-1), dtype=np.int8)
-
-        for i in range(popSize):
+        for i in range(len(preOptima)):
+            populations[i] = preOptima[i]
+        for i in range(len(preOptima), popSize):
             new_idv = np.zeros(2*len(sorted_routes)-1, dtype=np.int8)
             for j in range(len(new_idv)):
                 new_idv[j] = random.randint(0, 1)
@@ -314,7 +315,7 @@ class Lower:
             fitness_results[i] = pop_fitness[i]
 
         pop_ranked = sorted(fitness_results.items(), key = operator.itemgetter(1), reverse = False)
-        return np.array(list(map(lambda x: x[0], pop_ranked)), dtype=np.int16)
+        return list(map(lambda x: x[0], pop_ranked))
 
     def select_elite(self, pop_ranked, pop, eliteSize):
         elite_pop = np.zeros((eliteSize, len(pop[0])), dtype=np.int8)
@@ -322,10 +323,10 @@ class Lower:
             elite_pop[i] = pop[idx]
         return elite_pop
 
-    def run(self, popSize, eliteSize, mutationRate, generations, check_dup = True):
+    def run(self, popSize, eliteSize, mutationRate, generations, preOptima=[], check_dup = True, save_stats=False):
         specific_route = self.get_specific_route(self.t_route)
         sorted_routes, t_back_time, max_cost = self.sort_by_time(specific_route)
-        pop = self.init_pop(popSize, sorted_routes)
+        pop = self.init_pop(popSize, sorted_routes, preOptima)
 
         # print(specific_route)
         # print(self.sort_by_time(specific_route))
@@ -333,6 +334,9 @@ class Lower:
         # print(pop[0], pop[1])
         # print(self.crossover(pop[0], pop[1]))
         # print(self.mutate(pop[0], mutationRate))
+
+        record = []
+        fitness_results = []
 
         for i in range(generations):
 
@@ -363,11 +367,17 @@ class Lower:
             
             best_idx = self.rank_pop(pop, pop_fitness)[0]
             best_cost = pop_fitness[best_idx]
-            best_tour = uav_tours[best_idx]
+            # best_tour = uav_tours[best_idx]
+            best_tour = pop[best_idx]
             best_route_detail = pop_details[best_idx]
             
             # print('best cost:', best_cost)
             # print('uav_tour:', best_tour)
+            fitness_results += [best_cost]
+            if fitness_results.count(best_cost) != len(fitness_results):
+                fitness_results.clear()
+            if save_stats:
+                record += [best_cost]
 
             pop_ranked = self.rank_pop(pop, pop_fitness)
             next_pop = self.select_elite(pop_ranked, pop, eliteSize)
@@ -385,5 +395,10 @@ class Lower:
             # elite_pop = self.select_elite(pop_ranked, pop, eliteSize)
             # next_pop += elite_pop
             pop = next_pop
-        # sys.exit()
+            if len(fitness_results) >= 10:
+                # print(f'lower {i}')
+                return best_cost, best_tour, best_route_detail
+
+        if save_stats:
+            return best_cost, best_tour, best_route_detail, record
         return best_cost, best_tour, best_route_detail
