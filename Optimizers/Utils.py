@@ -95,7 +95,7 @@ def to_excel(filename, data_ws, df, start_row=2, start_col=2):
     writer.close()
     print('Done saving df.')
 
-def save_solution(instance, run_time, number_of_tech, cost, work_time, version, params, current_time = ''):
+def save_solution(instance, run_time, number_of_tech, cost, work_time, version, params, t_route, uav_route, current_time = ''):
     # Instance, run_time, number_of_tech, cost, work_time
     output_file = 'result.xlsx'
     if current_time != '':
@@ -107,12 +107,20 @@ def save_solution(instance, run_time, number_of_tech, cost, work_time, version, 
         
         for i in range(len(df['Instance'])):
             data.append([
-                df['Instance'][i], df['run_time'][i], df['number_of_tech'][i], df['cost'][i], df['work_time'][i], df['version'][i], df['params'][i]
+                df['Instance'][i], 
+                df['run_time'][i], 
+                df['number_of_tech'][i], 
+                df['cost'][i], 
+                df['work_time'][i], 
+                df['version'][i], 
+                df['params'][i],
+                df['t_route'][i], 
+                df['uav_route'][i]
             ])
     except FileNotFoundError:
         print(f"No such file or directory: {output_file}")
-    data.append([instance, run_time, number_of_tech, cost, work_time, version, params])
-    df = pd.DataFrame(data, columns=['Instance', 'run_time', 'number_of_tech', 'cost', 'work_time', 'version', 'params'])
+    data.append([instance, run_time, number_of_tech, cost, work_time, version, params, t_route, uav_route])
+    df = pd.DataFrame(data, columns=['Instance', 'run_time', 'number_of_tech', 'cost', 'work_time', 'version', 'params', 't_route', 'uav_route'])
     to_excel(output_file, 'result', df)
 
 def save_stats(instance, version, run_time, tech_num, work_time, level, record, params, current_time=''):
@@ -186,11 +194,13 @@ def combine_results(folder_path, output_path):
                         df['run_time'][i], 
                         df['cost'][i], 
                         df['work_time'][i], 
-                        str(df['version'][i])+'|'+str(df['params'][i])+'|'+ str(df['number_of_tech'][i])
+                        str(df['version'][i])+'|'+str(df['params'][i])+'|'+ str(df['number_of_tech'][i]),
+                        df['t_route'][i], 
+                        df['uav_route'][i]
                     ])
             except FileNotFoundError:
                 print(f"No such file or directory: {output_file}")
-    df1= pd.DataFrame(data, columns=['Instance', 'run_time', 'cost', 'work_time', 'params'])
+    df1= pd.DataFrame(data, columns=['Instance', 'run_time', 'cost', 'work_time', 'params', 't_route', 'uav_route'])
     to_excel(output_file, 'result', df1)
 
 def convert_result_to_col(filename, output_file, run_num):
@@ -217,14 +227,14 @@ def convert_result_to_col(filename, output_file, run_num):
         col_set = ['Instance']
         df = pd.read_excel(filename, sheet_name='result', engine='openpyxl')
         for i in df['params']:
-            ip = i.split('|')[:4]
+            ip = i.split('|')[:4] + [i.split('|')[4].split('/')[1]]
             if ip not in param_set:
                 param_set.append(ip)
         for i in df['Instance']:
             if i not in instance_set:
                 instance_set[i] = [[] for x in range(len(param_set))]
         for i in range(len(df['Instance'])):
-            idp = param_set.index(df['params'][i].split('|')[:4])
+            idp = param_set.index(df['params'][i].split('|')[:4] + [df['params'][i].split('|')[4].split('/')[1]])
             ins = df['Instance'][i]
             instance_set[ins][idp].append([df['run_time'][i], df['cost'][i], df['work_time'][i], df['params'][i]])
         missing_set=[]
@@ -265,7 +275,7 @@ def combine_stats(folder_path, output_path):
                 old_data = df.values.tolist()
                 upper_data.extend(list(map(lambda i: old_data[i][1:], range(len(old_data)))))
                 df1 = pd.read_excel(f'{folder_path}/{file}', sheet_name='diff', engine='openpyxl')
-                old_data = df.values.tolist()
+                old_data = df1.values.tolist()
                 diff_data.extend(list(map(lambda i: old_data[i][1:], range(len(old_data)))))
                 col_num = df.columns.shape[0]-1
             except FileNotFoundError:
@@ -274,7 +284,7 @@ def combine_stats(folder_path, output_path):
     df2 = pd.DataFrame(upper_data, columns=['Instance', 'version', 'run_time', 'tech_num', 'work_time', 'params', *iter_cols])
     to_excel(output_file, 'upper', df2)
     df3 = pd.DataFrame(diff_data, columns=['Instance', 'version', 'run_time', 'tech_num', 'work_time', 'params', *iter_cols])
-    to_excel(output_file, 'lower', df3)
+    to_excel(output_file, 'diff', df3)
 
 def convert_stats_to_result(folder_path, output_path):
     current_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
@@ -290,6 +300,24 @@ def convert_stats_to_result(folder_path, output_path):
     df1= pd.DataFrame(data, columns=['Instance', 'run_time', 'cost', 'work_time', 'params'])
     to_excel(output_file, 'result', df1)
 
+def get_converge_iteration(folder_path, output_path):
+    current_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
+    filenames = next(os.walk(folder_path), (None, None, []))[2]
+    upper_data = []
+    output_file = f'{output_path}/{current_time}converge_iters.xlsx'
+    for file in filenames:
+        if 'stats' in file:
+            try:
+                df = pd.read_excel(f'{folder_path}/{file}', sheet_name='upper', engine='openpyxl')
+                col_num = df.columns.shape[0]-1
+                old_data = df.values.tolist()
+                upper_data.extend(list(map(lambda i: old_data[i][1:7] + [min(old_data[i][7:col_num]), old_data[i][7:col_num].index(min(old_data[i][7:col_num]))], range(len(old_data)))))
+            except FileNotFoundError:
+                print(f"No such file or directory: {output_file}")
+    # iter_cols = list(map(lambda x: f'iter{x}', range(col_num-6)))
+    df2 = pd.DataFrame(upper_data, columns=['Instance', 'version', 'run_time', 'tech_num', 'work_time', 'params', 'cost', 'iter'])
+    to_excel(output_file, 'upper', df2)
+
 if __name__ == "__main__":
     # i1 = [2, 8, 5, 7, 3, 4, 6, 1]
     # i2 = [6, 3, 4, 2, 8, 7, 1, 5]
@@ -297,8 +325,9 @@ if __name__ == "__main__":
     # print(ds)
     # save_stats('instance', 'version', 'runtime', 'tech_num', 'work_time', 'upper', [0,1])
     # adjust_results('../result6-20.xlsx', '../mixed-result.xlsx')
-    convert_result_to_col('../result3/general/20211211023614mixed-result.xlsx', '../compare-result.xlsx', 5)
+    # convert_result_to_col('../result3/general/20211225082240mixed-result.xlsx', '../compare-result.xlsx', 5)
     # combine_results('../result3/new', '../result3/general')
     # combine_stats('../result3/old', '../result3/general')
     # convert_stats_to_result('../result3/general/20211211015719mixed-stats.xlsx', '../result3/general')
+    # get_converge_iteration('../result3/general/21_12_17', '../result3/general/21_12_17')
     pass

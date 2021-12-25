@@ -194,14 +194,123 @@ class Upper:
         for i in range(len(pop)):
             if i ==0 or is_diff(pop[i], chosen_pop, len(chosen_pop)):
                 chosen_pop += [i]
-                idv = ''.join(map(str, pop[i]))
+                idv = '-'.join(map(str, pop[i]))
                 if idv in cal_pop and cal_pop[idv][3] >= cal_times:
                     offset +=1
             if len(chosen_pop) >= diff_size + offset:
                 break
         return chosen_pop
 
-    def run(self, u_params, l_params, technican_num, save_stats=False):
+    def run0(self, u_params, l_params, technican_num, save_stats=False):
+        popSize= u_params['pop_size']
+        generations = u_params['generations']
+        eliteSize = u_params['elite_size']
+        mutationRate =u_params['mutation_rate']
+        create_sample = u_params['create_sample']
+        # diff_size=u_params['diff_size']
+        cal_times=u_params['cal_times']
+        pop = self.init_Pop(popSize, technican_num, create_sample)
+
+        cal_pop = {}
+        record = {
+            'convergence': [],
+            'diff': []
+        }
+        optima_id = None
+        start = time.time()
+        for i in range(0, generations):
+            print("=====================================")
+            print(f'generation {i+1}')
+
+            # low_fitness = np.zeros((popSize//2), dtype=np.float32)
+            low_fitness = []
+            u_tours = []
+            route_details = []
+
+            count = 0
+            for j in range(popSize):
+                t_route = pop[j][:]
+
+                idv = '-'.join(map(str, pop[j]))
+                if idv not in cal_pop:
+                    count += 1
+                    # lower GA
+                    lower_GA = Lower(self.graph, t_route, l_params, technican_num)
+                    cost, u_tour, route_detail = lower_GA.run(l_params= l_params,
+                                                        check_dup=False)
+
+                    ### technican fitness: tf ^ alpha * df ^ beta.
+
+                    cal_pop[idv] = (cost, u_tour, route_detail, 1)
+
+                    low_fitness += [cost]
+                    u_tours += [u_tour]
+                    route_details += [route_detail]
+                elif idv in cal_pop and cal_pop[idv][3] < cal_times:
+                    count += 1
+                    # lower GA
+                    lower_GA = Lower(self.graph, t_route, l_params, technican_num)
+                    cost, u_tour, route_detail = lower_GA.run(l_params= l_params,
+                                                        preOptima=[cal_pop[idv][1]],
+                                                        check_dup=False)
+
+                    ### technican fitness: tf ^ alpha * df ^ beta.
+                    cal_pop[idv] = (cost, u_tour, route_detail, cal_pop[idv][3]+1)
+
+                    low_fitness += [cost]
+                    u_tours += [u_tour]
+                    route_details += [route_detail]
+                else:
+                    low_fitness += [cal_pop[idv][0]]
+                    u_tours += [cal_pop[idv][1]]
+                    route_details += [cal_pop[idv][2]]
+            
+            print(len(low_fitness))
+            print(count)
+            # print(len(pop))
+                    
+            best_idv = pop[self.rank_pop(pop, low_fitness)[0]]
+            best_id = '-'.join(map(str, best_idv))
+            best_idv_detail = cal_pop[best_id]
+            print('cost:', best_idv_detail[0])
+
+            if optima_id != None:
+                if best_idv_detail[0] < cal_pop[optima_id][0]:
+                    optima_id = best_id
+            else:
+                optima_id = best_id
+
+            if save_stats:
+                record['convergence'] +=[best_idv_detail[0]]
+                record['diff'].append(f'{len(low_fitness)}|{count}')
+
+            pop_ranked = self.rank_pop(pop, low_fitness)
+            # next_pop = self.select_elite(pop_ranked, pop, eliteSize, technican_num)
+            next_pop = self.select_elite1(pop_ranked, pop, eliteSize)
+            while len(next_pop) < popSize:
+                p1, p2 = self.tournament_selection(pop, low_fitness)
+                c1, c2 = self.crossover(p1, p2)
+                while c1.tolist() in next_pop.tolist() and c2.tolist() in next_pop.tolist():
+                    print(c1, c2)
+                    p1, p2 = self.tournament_selection(pop, low_fitness)
+                    c1, c2 = self.crossover(p1, p2)
+                c1, c2 = self.mutate(c1, mutationRate), self.mutate(c2, mutationRate)
+                # next_pop += [c1, c2]
+                next_pop = np.concatenate((next_pop, np.array([c1, c2], dtype=np.int16)))
+            # elite_pop = self.selection(pop_ranked, pop, eliteSize)
+            # next_pop += elite_pop
+            pop = next_pop[:popSize]
+
+        run_time = time.time() - start
+        print(run_time)
+        print("total idv:", len(cal_pop))
+
+        if cal_pop[optima_id][2]['work_time'] > l_params['work_time']:
+            cal_pop[optima_id] = (INFINITY, *cal_pop[optima_id][1:])
+
+        return cal_pop[optima_id], run_time, record, optima_id
+
+    def run1(self, u_params, l_params, technican_num, save_stats=False):
         popSize= u_params['pop_size']
         generations = u_params['generations']
         eliteSize = u_params['elite_size']
@@ -216,6 +325,7 @@ class Upper:
             'convergence': [],
             'diff': []
         }
+        optima_id = None
         start = time.time()
         for i in range(0, generations):
             print("=====================================")
@@ -240,15 +350,12 @@ class Upper:
             for j in range(popSize):
                 t_route = pop[j][:]
 
-                idv = ''.join(map(str, pop[j]))
+                idv = '-'.join(map(str, pop[j]))
                 if idv not in cal_pop:
                     count += 1
                     # lower GA
                     lower_GA = Lower(self.graph, t_route, l_params, technican_num)
-                    cost, u_tour, route_detail = lower_GA.run(popSize=l_params['pop_size'], 
-                                                        eliteSize=l_params['elite_size'], 
-                                                        mutationRate=l_params['mutation_rate'], 
-                                                        generations=l_params['generations'],
+                    cost, u_tour, route_detail = lower_GA.run(l_params= l_params,
                                                         check_dup=False)
 
                     ### technican fitness: tf ^ alpha * df ^ beta.
@@ -262,10 +369,7 @@ class Upper:
                     count += 1
                     # lower GA
                     lower_GA = Lower(self.graph, t_route, l_params, technican_num)
-                    cost, u_tour, route_detail = lower_GA.run(popSize=l_params['pop_size'], 
-                                                        eliteSize=l_params['elite_size'], 
-                                                        mutationRate=l_params['mutation_rate'], 
-                                                        generations=l_params['generations'],
+                    cost, u_tour, route_detail = lower_GA.run(l_params= l_params,
                                                         preOptima=[cal_pop[idv][1]],
                                                         check_dup=False)
 
@@ -286,9 +390,15 @@ class Upper:
             print(count)
                     
             best_idv = pop[self.rank_pop(pop, low_fitness)[0]]
-            best_id = ''.join(map(str, best_idv))
+            best_id = '-'.join(map(str, best_idv))
             best_idv_detail = cal_pop[best_id]
             print('cost:', best_idv_detail[0])
+
+            if optima_id != None:
+                if best_idv_detail[0] < cal_pop[optima_id][0]:
+                    optima_id = best_id
+            else:
+                optima_id = best_id
 
             if save_stats:
                 record['convergence'] +=[best_idv_detail[0]]
@@ -314,9 +424,13 @@ class Upper:
         run_time = time.time() - start
         print(run_time)
         print("total idv:", len(cal_pop))
-        return best_idv_detail, run_time, record
 
-    def run1(self, u_params, l_params, technican_num, save_stats=False):
+        if cal_pop[optima_id][2]['work_time'] > l_params['work_time']:
+            cal_pop[optima_id] = (INFINITY, *cal_pop[optima_id][1:])
+        
+        return cal_pop[optima_id], run_time, record, optima_id
+
+    def run2(self, u_params, l_params, technican_num, save_stats=False):
         popSize= u_params['pop_size']
         generations = u_params['generations']
         eliteSize = u_params['elite_size']
@@ -358,15 +472,12 @@ class Upper:
                 # print(f'calculating fitness {j+1}')
                 
                 t_route = pop[j][:]
-                idv = ''.join(map(str, pop[j]))
+                idv = '-'.join(map(str, pop[j]))
                 if idv not in cal_pop:
                     count += 1
                     # lower GA
                     lower_GA = Lower(self.graph, t_route, l_params, technican_num)
-                    cost, u_tour, route_detail = lower_GA.run(popSize=l_params['pop_size'], 
-                                                        eliteSize=l_params['elite_size'], 
-                                                        mutationRate=l_params['mutation_rate'], 
-                                                        generations=l_params['generations'],
+                    cost, u_tour, route_detail = lower_GA.run(l_params= l_params,
                                                         check_dup=False)
 
                     ### technican fitness: tf ^ alpha * df ^ beta.
@@ -380,10 +491,7 @@ class Upper:
                     count += 1
                     # lower GA
                     lower_GA = Lower(self.graph, t_route, l_params, technican_num)
-                    cost, u_tour, route_detail = lower_GA.run(popSize=l_params['pop_size'], 
-                                                        eliteSize=l_params['elite_size'], 
-                                                        mutationRate=l_params['mutation_rate'], 
-                                                        generations=l_params['generations'],
+                    cost, u_tour, route_detail = lower_GA.run(l_params= l_params,
                                                         preOptima=[cal_pop[idv][1]],
                                                         check_dup=False)
 
@@ -418,9 +526,11 @@ class Upper:
                 pop = np.array(adjusted_pop, dtype=np.int16)
 
             best_idv = pop[self.rank_pop(pop, low_fitness)[0]]
-            best_id = ''.join(map(str, best_idv))
+            best_id = '-'.join(map(str, best_idv))
             best_idv_detail = cal_pop[best_id]
+
             print('cost:', best_idv_detail[0])
+
             if save_stats:
                 record['convergence'] +=[best_idv_detail[0]]
                 record['diff'].append(f'{len(run_list)}|{count}')
@@ -460,9 +570,12 @@ class Upper:
         print(run_time)
         print(len(cal_pop))
 
-        return best_idv_detail, run_time, record
+        if cal_pop[optima_id][2]['work_time'] > l_params['work_time']:
+            cal_pop[optima_id] = (INFINITY, *cal_pop[optima_id][1:])
 
-    def run2(self, u_params, l_params, technican_num, save_stats=False):
+        return best_idv_detail, run_time, record, best_id
+
+    def run3(self, u_params, l_params, technican_num, save_stats=False):
         popSize= u_params['pop_size']
         generations = u_params['generations']
         eliteSize = u_params['elite_size']
@@ -479,6 +592,7 @@ class Upper:
             'diff': []
         }
         cal_pop = {}
+        optima_id = None
         start = time.time()
         for i in range(0, generations):
             print("=====================================")
@@ -509,15 +623,12 @@ class Upper:
             for j in run_list:
                 t_route = pop[j][:]
 
-                idv = ''.join(map(str, pop[j]))
+                idv = '-'.join(map(str, pop[j]))
                 if idv not in cal_pop:
                     count += 1
                     # lower GA
                     lower_GA = Lower(self.graph, t_route, l_params, technican_num)
-                    cost, u_tour, route_detail = lower_GA.run(popSize=l_params['pop_size'], 
-                                                        eliteSize=l_params['elite_size'], 
-                                                        mutationRate=l_params['mutation_rate'], 
-                                                        generations=l_params['generations'],
+                    cost, u_tour, route_detail = lower_GA.run(l_params= l_params,
                                                         check_dup=False)
 
                     ### technican fitness: tf ^ alpha * df ^ beta.
@@ -531,10 +642,7 @@ class Upper:
                     count += 1
                     # lower GA
                     lower_GA = Lower(self.graph, t_route, l_params, technican_num)
-                    cost, u_tour, route_detail = lower_GA.run(popSize=l_params['pop_size'], 
-                                                        eliteSize=l_params['elite_size'], 
-                                                        mutationRate=l_params['mutation_rate'], 
-                                                        generations=l_params['generations'],
+                    cost, u_tour, route_detail = lower_GA.run(l_params= l_params,
                                                         preOptima=[cal_pop[idv][1]],
                                                         check_dup=False)
 
@@ -566,9 +674,16 @@ class Upper:
                 upper_fitness = list(map(lambda x: upper_fitness[x], adjusted_pop))
 
             best_idv = pop[self.rank_pop(pop, low_fitness)[0]]
-            best_id = ''.join(map(str, best_idv))
+            best_id = '-'.join(map(str, best_idv))
             best_idv_detail = cal_pop[best_id]
             print('cost:', best_idv_detail[0])
+
+            if optima_id != None:
+                if best_idv_detail[0] < cal_pop[optima_id][0]:
+                    optima_id = best_id
+            else:
+                optima_id = best_id
+
             if save_stats:
                 record['convergence'] +=[best_idv_detail[0]]
                 record['diff'] += [f'{len(run_list)}|{count}']
@@ -593,6 +708,10 @@ class Upper:
         run_time = time.time() - start
         print("total idv:", len(cal_pop))
         print("run_time:", run_time)
-        return best_idv_detail, run_time, record
+
+        if cal_pop[optima_id][2]['work_time'] > l_params['work_time']:
+            cal_pop[optima_id] = (INFINITY, *cal_pop[optima_id][1:])
+            
+        return cal_pop[optima_id], run_time, record, optima_id
 
         

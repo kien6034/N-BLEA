@@ -198,11 +198,19 @@ class Lower:
         lattest_node = list(search_space.keys())[-1]
         work_time = search_space[lattest_node] + self.graph.ttime[lattest_node][0]
         
+        # if work_time > self.l_params['work_time']:
+        #     cost = INFINITY
+        # else:
+        #     cost, wait_times = self.find_cost(time_at_nodes=route_details['time_at_node'], uav_tour=uav_tour, specific_routes=specific_routes)
+        #     route_details['wait_times'] = wait_times
+
+
+        cost, wait_times = self.find_cost(time_at_nodes=route_details['time_at_node'], uav_tour=uav_tour, specific_routes=specific_routes)
+        route_details['wait_times'] = wait_times
         if work_time > self.l_params['work_time']:
-            cost = INFINITY
-        else:
-            cost, wait_times = self.find_cost(time_at_nodes=route_details['time_at_node'], uav_tour=uav_tour, specific_routes=specific_routes)
-            route_details['wait_times'] = wait_times
+            penalty_rate = (work_time - self.l_params['work_time']) / self.l_params['work_time']
+            cost += cost * penalty_rate
+
         return cost, route_details, uav_tour, work_time
     
     def find_cost(self, time_at_nodes, uav_tour, specific_routes):
@@ -323,7 +331,13 @@ class Lower:
             elite_pop[i] = pop[idx]
         return elite_pop
 
-    def run(self, popSize, eliteSize, mutationRate, generations, preOptima=[], check_dup = True, save_stats=False):
+    def run(self, l_params, preOptima=[], check_dup = True, save_stats=False):
+        popSize=l_params['pop_size']
+        eliteSize=l_params['elite_size']
+        mutationRate=l_params['mutation_rate']
+        generations=l_params['generations']
+        early_stop = l_params['early_stop']
+
         specific_route = self.get_specific_route(self.t_route)
         sorted_routes, t_back_time, max_cost = self.sort_by_time(specific_route)
         pop = self.init_pop(popSize, sorted_routes, preOptima)
@@ -358,6 +372,7 @@ class Lower:
                 cost, route_details, uav_tour, work_time = self.get_fitness(idv, sorted_routes, specific_route)
                 route_details['number_of_tech'] = self.technican_num
                 route_details['work_time'] = work_time
+                route_details['uav_tour'] = uav_tour
             
                 pop_fitness += [cost]
                 uav_tours += [uav_tour]
@@ -374,6 +389,7 @@ class Lower:
             # print('best cost:', best_cost)
             # print('uav_tour:', best_tour)
             fitness_results += [best_cost]
+
             if fitness_results.count(best_cost) != len(fitness_results):
                 fitness_results.clear()
             if save_stats:
@@ -395,7 +411,7 @@ class Lower:
             # elite_pop = self.select_elite(pop_ranked, pop, eliteSize)
             # next_pop += elite_pop
             pop = next_pop
-            if len(fitness_results) >= 10:
+            if len(fitness_results) >= 10 and early_stop:
                 # print(f'lower {i}')
                 return best_cost, best_tour, best_route_detail
 
